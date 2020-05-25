@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+</style>
+
+<title>Dynamic Population / Spreader Model</title>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+function getParams() {
+  let w = new URLSearchParams(window.location.search)
+
+  return {
+    r0_pp: parseFloat(w.get("r0_pp")) || 1.0,
+    r0_ps: parseFloat(w.get("r0_ps")) || 1.0,
+    r0_sp: parseFloat(w.get("r0_sp")) || 100,
+    r0_ss: parseFloat(w.get("r0_ss")) || 1.0,
+    pop: parseFloat(w.get("pop")) || 1000000,
+    inf: parseFloat(w.get("inf")) || 100,
+    spreader: parseFloat(w.get("spreader")) || 100,
+    ymax: parseFloat(w.get("ymax")) || 100
+  }
+}
+
+params = getParams() 
+
+function makeWindowParams() {
+  parts = []
+  for (let [key, value] of Object.entries(params)) {
+     parts.push(key + "=" + value)
+  } 
+  return parts.join("&")  
+}
+
+function copyGraphLink() {
+  var copyText = document.getElementById("myInput");
+  /* Select the text field */
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+  /* Copy the text inside the text field */
+  document.execCommand("copy");
+}
+
+function initialState() {
+   spreader_state = {
+     infected: 0,
+     ever_sick: 0,
+     population: params.spreader
+   }
+   healthy_state = {
+     infected: params.inf,
+     ever_sick: params.inf,
+     population: params.pop
+   }
+   return {
+     day: 0,
+     healthy: healthy_state,
+     spreader: spreader_state
+   }
+}
+
+function expectedNewInfections(state, new_infections) {
+  if(state.population == 0) {
+    return 0;
+  }
+  prob_single_not = 1 - (1 / state.population)
+  prob_total_not = Math.pow(prob_single_not, new_infections)
+  prob_selected = 1 - prob_total_not
+  return (state.population - state.ever_sick) * prob_selected 
+}
+
+function advanceState(current_state) {
+   new_pop_infections = current_state.healthy.infected * params.r0_pp + current_state.spreader.infected * params.r0_sp
+   new_spreader_infections = current_state.healthy.infected * (params.r0_ps / 1000) + current_state.spreader.infected * params.r0_ss
+   
+   actual_new_pop = expectedNewInfections(current_state.healthy, new_pop_infections)
+   actual_new_spreader = expectedNewInfections(current_state.spreader, new_spreader_infections)
+
+   spreader_state = {
+     infected: actual_new_spreader,
+     ever_sick: current_state.spreader.ever_sick + actual_new_spreader,
+     population: current_state.spreader.population
+   }
+   healthy_state = {
+     infected: actual_new_pop,
+     ever_sick: current_state.healthy.ever_sick + actual_new_pop,
+     population: current_state.healthy.population
+   }
+   return {
+     day: current_state.day + 1,
+     healthy: healthy_state,
+     spreader: spreader_state
+   } 
+}
+
+function drawGraph(data){
+  // set the dimensions and margins of the graph
+  var margin = {top: 20, right: 20, bottom: 30, left: 50},
+      width = 960 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+  // set the ranges
+  var x = d3.scaleLinear().range([0, width]);
+  var y = d3.scaleLinear().range([height, 0]);
+
+  // define the line
+  var valueline = d3.line()
+      .x(function(d) { return x(d.day); })
+      .y(function(d) { return y(d.healthy.ever_sick * 100 / d.healthy.population); });
+
+  // append the svg obgect to the body of the page
+  // appends a 'group' element to 'svg'
+  // moves the 'group' element to the top left margin
+  d3.select("body").select("svg").remove();
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  // Scale the range of the data
+  x.domain([0, d3.max(data, function(d) { return d.day; })]);
+  if (params.ymax == 0) {
+     y.domain([0, d3.max(data, function(d) { return d.healthy.ever_sick * 100 / d.healthy.population; })]);
+  } else {
+    y.domain([0, params.ymax])
+  }
+  
+  // Add the valueline path.
+  svg.append("path")
+      .data([data])
+      .attr("class", "line")
+      .attr("d", valueline);
+
+  // Add the X Axis
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  // Add the Y Axis
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+  // text label for the y axis
+  svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Healthy Percentage Infected");     
+}
+
+
+function updateGraph() {
+  state = initialState();
+  data = []
+  data.push(state)
+  for(i = 1; i < 100; i++) {
+    state = advanceState(state);
+    data.push(state);
+  }
+  drawGraph(data);
+  var copyText = document.getElementById("myInput");
+  copyText.value =  window.location.href.split('?')[0] + "?" + makeWindowParams()
+}
+
+function updateAttribute(attribute, value, update_graph=true) {
+  // adjust the text on the range slider
+  d3.select("#" + attribute + "-value").text(value);
+  d3.select("#" + attribute + "-value").property("value", value);
+  d3.select("#" + attribute).property("value", value);
+  if(update_graph == true) {
+     updateGraph();
+  }
+}
+
+function initializeGraph() {
+  for (let [key, value] of Object.entries(params)) {
+    d3.select("#" + key).on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+
+    d3.select("#" + key + "-value").on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+    updateAttribute(key, value, false)
+  }
+  updateAttribute("r0_pp", params.r0_pp)
+}
+
+initializeGraph()
+
+</script>
