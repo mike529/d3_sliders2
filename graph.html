@@ -7,28 +7,28 @@
          style="display: inline-block; width: 240px; text-align: right">
          POP->POP = <span id="r0_pp-value">…</span>
   </label>
-  <input type="range" min="0" max="2.0" id="r0_pp">
+  <input type="range" min="0" max="2.0" id="r0_pp" step=.01>
 </p>
 <p>
   <label for="POP->SPREADER (infections per 1000)" 
          style="display: inline-block; width: 240px; text-align: right">
          POP->SPREADER = <span id="r0_ps-value">…</span>
   </label>
-  <input type="range" min="0" max="20" id="r0_ps">
+  <input type="range" min="0" max="20" id="r0_ps" step=.01>
 </p>
 <p>
   <label for="SPREADER->POP" 
          style="display: inline-block; width: 240px; text-align: right">
          SPREADER->POP = <span id="r0_sp-value">…</span>
   </label>
-  <input type="range" min="0" max="500" id="r0_sp">
+  <input type="range" min="0" max="500" id="r0_sp" step=.01>
 </p>
 <p>
   <label for="SPREADER->SPREADER" 
          style="display: inline-block; width: 240px; text-align: right">
          SPREADER->SPREADER = <span id="r0_ss-value">…</span>
   </label>
-  <input type="range" min="0" max="500" id="r0_ss">
+  <input type="range" min="0" max="500" id="r0_ss" step=.01>
 </p>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -72,6 +72,6 @@ d3.select("#r0_ss").on("input", function() {
 function updateAttribute(attribute, value) {
   // adjust the text on the range slider
   d3.select("#" + attribute + "-value").text(value);
-  d3.select("#" + attribute").property("value", value);
+  d3.select("#" + attribute).property("value", value);
 }
 </script>
