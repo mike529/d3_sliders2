@@ -1,74 +1,292 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<style> /* set the CSS */
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+</style>
+
 <title>Double Input Test</title>
 
-<p>
-  <label for="POP->POP" 
-         style="display: inline-block; width: 240px; text-align: right">
-         POP->POP = <span id="r0_pp-value">…</span>
-  </label>
-  <input type="range" min="0" max="3.0" id="r0_pp" step=.01>
-</p>
-<p>
-  <label for="POP->SPREADER" 
-         style="display: inline-block; width: 240px; text-align: right">
-         POP->SPREADER  (infections per 1000) = <span id="r0_ps-value">…</span>
-  </label>
-  <input type="range" min="0" max="20" id="r0_ps" step=.01>
-</p>
-<p>
-  <label for="SPREADER->POP" 
-         style="display: inline-block; width: 240px; text-align: right">
-         SPREADER->POP = <span id="r0_sp-value">…</span>
-  </label>
-  <input type="range" min="0" max="500" id="r0_sp" step=.01>
-</p>
-<p>
-  <label for="SPREADER->SPREADER" 
-         style="display: inline-block; width: 240px; text-align: right">
-         SPREADER->SPREADER = <span id="r0_ss-value">…</span>
-  </label>
-  <input type="range" min="0" max="3.0" id="r0_ss" step=.01>
-</p>
+<table style="width:100%">
+<tr>
+ <td>Transmission Parameters:</td>
+</tr>
+<tr>
+ <td>
+    <label for="r0_pp">Population Spread (R0):</label>
+    <input type="range" min="0" max="3.0" id="r0_pp" step=.01>
+    <input type="number" id="r0_pp-value">
+ </td>
+ <td>
+    <label for="r0_ps">Population->Spreader Spread (R0 per 1000):</label>
+    <input type="range" min="0" max="10" id="r0_ps" step=.1>
+    <input type="number" id="r0_ps-value">
+ </td>
+</tr>
+<tr>
+ <td>
+    <label for="r0_sp">Spreader -> Population Spread:</label>
+    <input type="range" min="0" max="1000" id="r0_sp" step=1>
+    <input type="number" id="r0_sp-value">
+ </td>
+ <td>
+    <label for="r0_ss">Spreader->Spreader Spread:</label>
+    <input type="range" min="0" max="3.0" id="r0_ss" step=.01>
+    <input type="number" id="r0_ss-value">
+ </td>
+</tr>
+<tr>
+ <td>Population Parameters:</td>
+</tr>
+<tr>
+ <td>
+  <label for="pop">Population Size:</label>
+  <input type="range" min="10000" max="10000000" id="pop" step=10000>
+  <input type="number" id="pop-value" size="10">
+ </td>
+ <td>
+  <label for="inf">Initial Infections:</label>
+  <input type="range" min="1" max="1000" id="inf" step=1>
+  <input type="number" id="inf-value" size="4">
+ </td>
+ <td>
+  <label for="spreader">Number Spreader Groups:</label>
+  <input type="range" min="0" max="10000" id="spreader" step=1>
+  <input type="number" id="spreader-value" size="4"> 
+ </td>
+</tr>
+</table>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
-function updateAttribute(attribute, value) {
+var r0_pp = 1.0;
+var r0_ps = 1;
+var r0_sp = 100;
+var r0_ss = 1.0
+var pop = 1000000
+var inf = 100
+var spreader = 100
+
+function initialState() {
+   spreader_state = {
+     infected: 0,
+     ever_sick: 0,
+     population: spreader
+   }
+   healthy_state = {
+     infected: inf,
+     ever_sick: inf,
+     population: pop
+   }
+   return {
+     day: 0,
+     healthy: healthy_state,
+     spreader: spreader_state
+   }
+}
+
+function expectedNewInfections(state, new_infections) {
+  if(state.population == 0) {
+    return 0;
+  }
+  prob_single_not = 1 - (1 / state.population)
+  prob_total_not = Math.pow(prob_single_not, new_infections)
+  prob_selected = 1 - prob_total_not
+  return (state.population - state.ever_sick) * prob_selected 
+}
+
+function advanceState(current_state) {
+   new_pop_infections = current_state.healthy.infected * r0_pp + current_state.spreader.infected * r0_sp
+   new_spreader_infections = current_state.healthy.infected * (r0_ps / 1000) + current_state.spreader.infected * r0_ss
+   
+   actual_new_pop = expectedNewInfections(current_state.healthy, new_pop_infections)
+   actual_new_spreader = expectedNewInfections(current_state.spreader, new_spreader_infections)
+
+   spreader_state = {
+     infected: actual_new_spreader,
+     ever_sick: current_state.spreader.ever_sick + actual_new_spreader,
+     population: current_state.spreader.population
+   }
+   healthy_state = {
+     infected: actual_new_pop,
+     ever_sick: current_state.healthy.ever_sick + actual_new_pop,
+     population: current_state.healthy.population
+   }
+   return {
+     day: current_state.day + 1,
+     healthy: healthy_state,
+     spreader: spreader_state
+   } 
+}
+
+function drawGraph(data){
+  // set the dimensions and margins of the graph
+  var margin = {top: 20, right: 20, bottom: 30, left: 50},
+      width = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
+
+  // set the ranges
+  var x = d3.scaleLinear().range([0, width]);
+  var y = d3.scaleLinear().range([height, 0]);
+
+  // define the line
+  var valueline = d3.line()
+      .x(function(d) { return x(d.day); })
+      .y(function(d) { return y(d.healthy.ever_sick * 100 / d.healthy.population); });
+
+  // append the svg obgect to the body of the page
+  // appends a 'group' element to 'svg'
+  // moves the 'group' element to the top left margin
+  d3.select("body").select("svg").remove();
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  // Scale the range of the data
+  x.domain([0, d3.max(data, function(d) { return d.day; })]);
+  y.domain([0, 100]);
+
+  // Add the valueline path.
+  svg.append("path")
+      .data([data])
+      .attr("class", "line")
+      .attr("d", valueline);
+
+  // Add the X Axis
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  // Add the Y Axis
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+  // text label for the y axis
+  svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Healthy Percentage Infected");     
+}
+
+
+function updateGraph() {
+  state = initialState();
+  data = []
+  data.push(state)
+  for(i = 1; i < 100; i++) {
+    state = advanceState(state);
+    data.push(state);
+  }
+  drawGraph(data);
+}
+
+function updateAttribute(attribute, value, update_graph=true) {
   // adjust the text on the range slider
   d3.select("#" + attribute + "-value").text(value);
+  d3.select("#" + attribute + "-value").property("value", value);
   d3.select("#" + attribute).property("value", value);
+  if(update_graph == true) {
+     updateGraph();
+  }
 }
     
-var r0 = {
- "pp": 1.0
- "ps": 100,
- "sp": 100,
- "ss": 1.0
-};
-
-updateAttribute("r0_pp", r0["pp"]);
-updateAttribute("r0_ps", r0["ps"]);
-updateAttribute("r0_sp", r0["sp"]);
-updateAttribute("r0_ss", r0["ss"]);
+// Set default transmission parameters
+updateAttribute("r0_pp", r0_pp, false);
+updateAttribute("r0_ps", r0_ps, false);
+updateAttribute("r0_sp", r0_sp, false);
+updateAttribute("r0_ss", r0_ss, false);
   
+// Set default population parameters
+updateAttribute("pop", pop, false);
+updateAttribute("inf", inf, false);
+updateAttribute("spreader", spreader, true);
 
 
 // read a change in the height input
 d3.select("#r0_pp").on("input", function() {
+  r0_pp = +this.value;
   updateAttribute("r0_pp", +this.value);
 });
-    
+
+d3.select("#r0_pp-value").on("input", function() {
+  r0_pp = +this.value;
+  updateAttribute("r0_pp", +this.value);
+});
+
 d3.select("#r0_ps").on("input", function() {
+  r0_ps = +this.value;
+  updateAttribute("r0_ps", +this.value);
+});
+
+d3.select("#r0_ps-value").on("input", function() {
+  r0_ps = +this.value;
   updateAttribute("r0_ps", +this.value);
 });
      
+
 d3.select("#r0_sp").on("input", function() {
+  r0_sp = +this.value;
   updateAttribute("r0_sp", +this.value);
 });
+
+d3.select("#r0_sp-value").on("input", function() {
+  r0_sp = +this.value;
+  updateAttribute("r0_sp", +this.value);
+});
+
     
 d3.select("#r0_ss").on("input", function() {
+  r0_ss = +this.value;
   updateAttribute("r0_ss", +this.value);
+});
+
+d3.select("#r0_ss-value").on("input", function() {
+  r0_ss = +this.value;
+  updateAttribute("r0_ss", +this.value);
+});
+
+
+d3.select("#pop").on("input", function() {
+  pop = +this.value;
+  updateAttribute("pop", +this.value);
+});
+
+d3.select("#pop-value").on("input", function() {
+  pop = +this.value;
+  updateAttribute("pop", +this.value);
+});
+
+
+d3.select("#inf").on("input", function() {
+  inf = +this.value;
+  updateAttribute("inf", +this.value);
+});
+
+d3.select("#inf-value").on("input", function() {
+  inf = +this.value;
+  updateAttribute("inf", +this.value);
+});
+
+d3.select("#spreader").on("input", function() {
+  spreader = +this.value;
+  updateAttribute("spreader", +this.value);
+});
+
+d3.select("#spreader-value").on("input", function() {
+  spreader = +this.value;
+  updateAttribute("spreader", +this.value);
 });
 
 </script>
