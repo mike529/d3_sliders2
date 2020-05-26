@@ -80,18 +80,29 @@
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
+function paramOrDefault(w, param, default_val) {
+  let val = parseFloat(w.get(param))
+  if(val == 0) {
+    return 0
+  }
+  return val || default_val
+  
+}
+  
 function getParams() {
   let w = new URLSearchParams(window.location.search)
 
   return {
-    r0_pp: parseFloat(w.get("r0_pp")) || 1.0,
-    r0_ps: parseFloat(w.get("r0_ps")) || 1.0,
-    r0_sp: parseFloat(w.get("r0_sp")) || 100,
-    r0_ss: parseFloat(w.get("r0_ss")) || 1.0,
-    pop: parseFloat(w.get("pop")) || 1000000,
-    inf: parseFloat(w.get("inf")) || 100,
-    spreader: parseFloat(w.get("spreader")) || 100,
-    ymax: parseFloat(w.get("ymax")) || 100
+    r0_pp: paramOrDefault(w, "r0_pp", 1.0),
+    r0_ps: paramOrDefault(w, "r0_ps", 100),
+    r0_sp: paramOrDefault(w, "r0_sp", 1.0),
+    r0_ss: paramOrDefault(w, "r0_ss", 1.0),
+    
+    
+    pop: paramOrDefault(w, "pop", 1000000),
+    inf: paramOrDefault(w, "inf", 100),
+    spreader: paramOrDefault(w, "spreader", 100),
+    ymax: paramOrDefault(w, "ymax", 0),
   }
 }
 
