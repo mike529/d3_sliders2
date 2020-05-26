@@ -70,8 +70,7 @@
   <input type="number" id="ymax-value" size="10">
  </td>
  <td>
-   <input type="text" value="" id="myInput" hidden=1>
-   <button onclick="copyGraphLink()">Copy Graph Link</button>
+   <a href="" id="myInput">Permalink</a>
  </td>
 </tr>
 
@@ -238,7 +237,7 @@ function updateGraph() {
   }
   drawGraph(data);
   var copyText = document.getElementById("myInput");
-  copyText.value =  window.location.href.split('?')[0] + "?" + makeWindowParams()
+  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
 }
 
 function updateAttribute(attribute, value, update_graph=true) {
