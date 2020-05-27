@@ -1,0 +1,193 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="1110" height="555" style="width: 1110px; height: 555px;"><style>svg {
+  background-color:hsla(270, 30%, 99%, 1);  
+}
+
+.lesser-used-options .input-group-text {
+  background-color: hsla(295, 100%, 95%, 1);
+}
+
+.input-group-prepend .input-group-text  {
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+.form-control {
+  border-top-left-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
+
+}
+
+.svg-hover-highlight {
+  opacity: 1 !important;
+}
+
+path.svg-hover-highlight {
+  stroke-width: 2px;
+}
+
+circle.svg-hover-highlight {
+  stroke: black;
+  stroke-width: 0.5px;
+  /* display: inline !important; */
+}
+
+text.C_highlight {
+  stroke: black;
+  stroke-width: 0.3px;
+}
+
+text.svg-hover-highlight {
+  font-size: 15px;
+  stroke: black;
+  stroke-width: 0.3px;
+}
+
+.chart-viz {
+  background-color:hsla(270, 30%, 99%, 1);
+  border-left: solid 1px #ccc;
+  border-right: solid 1px #ccc;
+  border-top: solid 1px #ccc;
+}
+
+.chart-header, .chart-header h2  {
+  text-align: left;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.3em;
+  font-weight: bold;
+  padding: 0px;  
+  border-bottom-width: 0px;
+}
+
+.chart-footer {
+  background-color:hsla(270, 30%, 99%, 1);
+  border: solid 1px #ccc;
+  padding: 5px;
+}
+
+.axis text {
+  font-weight: bold;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.axis-title {
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.grid {
+  stroke-opacity: 0.15;
+  color:hsla(270, 30%, 50%, 1);
+}
+
+.tip-country {
+  font-weight: bold;
+  border-bottom: solid 1px black;      
+}
+
+.tip-details {
+  font-size: 12px;
+}
+
+.text-credits {
+  opacity: 0.3;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.label-country {
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'Montserrat', sans-serif;
+}
+
+i {
+  color: #aaa;
+}
+
+.data-scale-float { float: right; text-align: right; }
+.data-scale-float > div { padding-bottom: 3px; }
+
+
+/* == https://rawgit.com/Caged/d3-tip/master/examples/example-styles.css ==  */
+.d3-tip {
+  line-height: 1;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  border-radius: 2px;
+  pointer-events: none;
+  border: solid 1px black;
+
+  margin-bottom: 200px;
+  
+  width: 200px;
+  text-align: center;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  pointer-events: none;
+}
+
+.d3-tip.n:after {
+  content: "\25BC";
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+  text-align: center;
+}
+
+/* Eastward tooltips */
+.d3-tip.e:after {
+  content: "\25C0";
+  margin: -4px 0 0 0;
+  top: 50%;
+  left: -8px;
+}
+
+/* Southward tooltips */
+.d3-tip.s:after {
+  content: "\25B2";
+  margin: 0 0 1px 0;
+  top: -8px;
+  left: 0;
+  text-align: center;
+}
+
+/* Westward tooltips */
+.d3-tip.w:after {
+  content: "\25B6";
+  margin: -4px 0 0 -1px;
+  top: 50%;
+  left: 100%;
+}
+
+.query-string {
+  display: none;
+  border-top: dashed 1px #aaa;
+}
+
+
+@media (min-width: 501px) {
+  .divoc-graph-loading { height: 555px; }
+  .divoc-graph-loading > .spinner-border { margin-top: 250px; }
+}
+
+@media (max-width: 500px) {
+  .divoc-graph-loading { height: 355px; }
+  .divoc-graph-loading > .spinner-border { margin-top: 150px; }
+}
+
+
+
+
+</style><g transform="translate(60,10)"><g transform="translate(0, 500)" class="axis" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle"><path class="domain" stroke="currentColor" d="M0.5,6V0.5H1030.5V6"></path><g class="tick" opacity="1" transform="translate(0.5,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">0</text></g><g class="tick" opacity="1" transform="translate(0.5,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">0</text></g><g class="tick" opacity="1" transform="translate(76.39473684210526,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">7</text></g><g class="tick" opacity="1" transform="translate(152.28947368421052,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">14</text></g><g class="tick" opacity="1" transform="translate(228.18421052631578,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">21</text></g><g class="tick" opacity="1" transform="translate(304.07894736842104,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">28</text></g><g class="tick" opacity="1" transform="translate(379.9736842105263,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">35</text></g><g class="tick" opacity="1" transform="translate(455.86842105263156,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">42</text></g><g class="tick" opacity="1" transform="translate(531.7631578947369,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">49</text></g><g class="tick" opacity="1" transform="translate(607.6578947368421,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">56</text></g><g class="tick" opacity="1" transform="translate(683.5526315789473,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">63</text></g><g class="tick" opacity="1" transform="translate(759.4473684210526,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">70</text></g><g class="tick" opacity="1" transform="translate(835.3421052631578,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">77</text></g><g class="tick" opacity="1" transform="translate(911.2368421052631,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">84</text></g><g class="tick" opacity="1" transform="translate(987.1315789473684,0)"><line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">91</text></g></g><g transform="translate(0, 500)" class="grid" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle"><path class="domain" stroke="currentColor" d="M0.5,-500V0.5H1030.5V-500"></path><g class="tick" opacity="1" transform="translate(0.5,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(0.5,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(76.39473684210526,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(152.28947368421052,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(228.18421052631578,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(304.07894736842104,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(379.9736842105263,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(455.86842105263156,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(531.7631578947369,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(607.6578947368421,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(683.5526315789473,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(759.4473684210526,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(835.3421052631578,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(911.2368421052631,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g><g class="tick" opacity="1" transform="translate(987.1315789473684,0)"><line stroke="currentColor" y2="-500"></line><text fill="currentColor" y="3" dy="0.71em"></text></g></g><g class="axis" fill="none" font-size="10" font-family="sans-serif" text-anchor="end"><path class="domain" stroke="currentColor" d="M-6,500.5H0.5V0.5H-6"></path><g class="tick" opacity="1" transform="translate(0,500.5)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">1</text></g><g class="tick" opacity="1" transform="translate(0,371.78201258826545)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">5</text></g><g class="tick" opacity="1" transform="translate(0,316.34619280764525)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">10</text></g><g class="tick" opacity="1" transform="translate(0,187.62820539591075)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">50</text></g><g class="tick" opacity="1" transform="translate(0,132.19238561529056)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">100</text></g><g class="tick" opacity="1" transform="translate(0,3.47439820355605)"><line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-9" dy="0.32em">500</text></g></g><g class="grid" fill="none" font-size="10" font-family="sans-serif" text-anchor="end"><path class="domain" stroke="currentColor" d="M1030,500.5H0.5V0.5H1030"></path><g class="tick" opacity="1" transform="translate(0,500.5)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,445.0641802193798)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,412.6363044509809)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,389.62836043875967)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,371.78201258826545)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,357.20048467036077)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,344.87197848057764)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,334.19254065813954)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,324.77260890196186)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,316.34619280764525)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,260.9103730270251)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,228.48249725862624)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,205.47455324640495)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,187.62820539591075)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,173.04667747800607)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,160.71817128822298)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,150.03873346578484)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,140.61880170960717)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,132.19238561529056)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,76.75656583467044)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,44.32869006627155)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,21.320746054050264)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g><g class="tick" opacity="1" transform="translate(0,3.47439820355605)"><line stroke="currentColor" x2="1030"></line><text fill="currentColor" x="-3" dy="0.32em"></text></g></g><path fill="none" stroke="black" stroke-width="2" stroke-dasharray="12" d="M0,495.00075991578643L10.842105263157894,470.99930024170413L21.684210526315788,446.9978405676218L32.526315789473685,422.9963808935394L43.368421052631575,398.994921219457L54.21052631578947,374.99346154537466L65.05263157894737,350.9920018712923L75.89473684210526,326.99054219720995L86.73684210526315,302.9890825231276L97.57894736842105,278.9876228490453L108.42105263157895,254.9861631749629L119.26315789473684,230.98470350088053L130.10526315789474,206.98324382679817L140.94736842105263,182.98178415271582L151.78947368421052,158.98032447863346L162.6315789473684,134.97886480455114L173.4736842105263,110.97740513046878L184.31578947368422,86.97594545638643L195.1578947368421,62.97448578230408L206,38.973026108221674L216.8421052631579,14.971566434139383L227.68421052631578,-9.029893239942965"></path><text class="label-country" x="223.60516473693576" y="5" text-anchor="end" fill="black" style="font-size: 10px;">1.35x daily</text><text x="1025" y="495" class="axis-title" text-anchor="end">Days since 1 death/1m people</text><text transform="rotate(-90)" x="-2" y="15" class="axis-title" text-anchor="end">COVID-19 Deaths/1m people</text><text x="1030" y="532" class="text-credits" text-anchor="end">Data: Johns Hopkins CSSE; Updated: 05/27/2020</text><a href="http://waf.cs.illinois.edu/"><text x="1030" y="542" class="axis-title" text-anchor="end" style="font-size: 8px; fill: rgb(170, 170, 170);">Interactive Visualization: https://91-DIVOC.com/ by @profwade_</text></a><text fill="#1f77b4" class="label-country C-Sweden C_highlight" x="742.2631578947369" y="20.98310213156379" alignment-baseline="middle" dominant-baseline="middle" style="opacity: 1; font-size: 15px;">Sweden</text><text fill="#ff7f0e" class="label-country C-Norway C_highlight" x="753.1052631578948" y="197.75032002317772" alignment-baseline="middle" dominant-baseline="middle" style="opacity: 1; font-size: 15px;">Norway</text><path fill="none" class="C-Sweden" stroke="#1f77b4" stroke-width="4" d="M0,495.00075991578643L10.842105263157894,465.03390854746215L21.684210526315788,447.1875606969679L32.526315789473685,443.2854706015014L43.368421052631575,429.3412128464737L54.21052631578947,400.1781570106643L65.05263157894737,356.7014340689024L75.89473684210526,339.3727383963642L86.73684210526315,314.56748318976685L97.57894736842105,314.56748318976685L108.42105263157895,310.84695272343174L119.26315789473684,288.20336916959326L130.10526315789474,271.4601695989298L140.94736842105263,248.78615919203827L151.78947368421052,228.50109883512383L162.6315789473684,216.46990518953945L173.4736842105263,213.18721530217L184.31578947368422,207.39824078058257L195.1578947368421,193.5178305350112L206,176.37880109899194L216.8421052631579,164.34080370042665L227.68421052631578,152.86499213469313L238.52631578947367,145.45352598499912L249.3684210526316,143.90582976566273L260.2105263157895,142.83109490595274L271.05263157894734,141.0713543360309L281.89473684210526,131.71913820240428L292.7368421052632,119.53454523156348L303.57894736842104,111.32781882592596L314.42105263157896,107.40573198519094L325.2631578947368,101.30353249054902L336.10526315789474,99.78311142338924L346.9473684210526,97.73230720447906L357.7894736842106,88.87678839266088L368.63157894736844,81.43975327975767L379.4736842105263,78.04456610930276L390.3157894736842,73.02159543133457L401.1578947368421,71.54868119940238L412,71.47574277001034L422.8421052631579,68.61144444919725L433.6842105263158,65.8122235056604L444.5263157894737,62.25858223518749L455.36842105263156,58.32865307848323L466.2105263157895,56.282938259414216L477.05263157894734,55.80205303887858L487.89473684210526,55.50296150748374L498.7368421052632,52.860309783755724L509.57894736842104,50.44218374142645L520.421052631579,48.04062367922629L531.2631578947369,45.39275727871084L542.1052631578947,41.917748046991996L552.9473684210526,40.79217381509942L563.7894736842105,40.66808227385804L574.6315789473683,39.90298264137437L585.4736842105264,38.51500809214231L596.3157894736843,35.04285013378694L607.1578947368421,33.46362819068355L618,30.855088414433517L628.8421052631579,30.243239664183243L639.6842105263158,30.13447182165352L650.5263157894736,29.722497842129435L661.3684210526316,28.755152571614538L672.2105263157895,26.89661252362946L683.0526315789473,26.0658911386093L693.8947368421052,24.957931642944963L704.7368421052631,23.604240663765484L715.5789473684212,23.48412502323727L726.421052631579,22.866385200899398L737.2631578947369,20.98310213156379" style="opacity: 1;"></path><circle cx="0" cy="495.00075991578643" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="10.842105263157894" cy="465.03390854746215" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="21.684210526315788" cy="447.1875606969679" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="32.526315789473685" cy="443.2854706015014" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="43.368421052631575" cy="429.3412128464737" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="54.21052631578947" cy="400.1781570106643" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="65.05263157894737" cy="356.7014340689024" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="75.89473684210526" cy="339.3727383963642" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="86.73684210526315" cy="314.56748318976685" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="97.57894736842105" cy="314.56748318976685" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="108.42105263157895" cy="310.84695272343174" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="119.26315789473684" cy="288.20336916959326" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="130.10526315789474" cy="271.4601695989298" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="140.94736842105263" cy="248.78615919203827" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="151.78947368421052" cy="228.50109883512383" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="162.6315789473684" cy="216.46990518953945" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="173.4736842105263" cy="213.18721530217" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="184.31578947368422" cy="207.39824078058257" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="195.1578947368421" cy="193.5178305350112" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="206" cy="176.37880109899194" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="216.8421052631579" cy="164.34080370042665" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="227.68421052631578" cy="152.86499213469313" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="238.52631578947367" cy="145.45352598499912" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="249.3684210526316" cy="143.90582976566273" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="260.2105263157895" cy="142.83109490595274" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="271.05263157894734" cy="141.0713543360309" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="281.89473684210526" cy="131.71913820240428" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="292.7368421052632" cy="119.53454523156348" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="303.57894736842104" cy="111.32781882592596" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="314.42105263157896" cy="107.40573198519094" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="325.2631578947368" cy="101.30353249054902" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="336.10526315789474" cy="99.78311142338924" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="346.9473684210526" cy="97.73230720447906" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="357.7894736842106" cy="88.87678839266088" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="368.63157894736844" cy="81.43975327975767" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="379.4736842105263" cy="78.04456610930276" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="390.3157894736842" cy="73.02159543133457" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="401.1578947368421" cy="71.54868119940238" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="412" cy="71.47574277001034" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="422.8421052631579" cy="68.61144444919725" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="433.6842105263158" cy="65.8122235056604" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="444.5263157894737" cy="62.25858223518749" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="455.36842105263156" cy="58.32865307848323" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="466.2105263157895" cy="56.282938259414216" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="477.05263157894734" cy="55.80205303887858" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="487.89473684210526" cy="55.50296150748374" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="498.7368421052632" cy="52.860309783755724" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="509.57894736842104" cy="50.44218374142645" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="520.421052631579" cy="48.04062367922629" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="531.2631578947369" cy="45.39275727871084" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="542.1052631578947" cy="41.917748046991996" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="552.9473684210526" cy="40.79217381509942" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="563.7894736842105" cy="40.66808227385804" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="574.6315789473683" cy="39.90298264137437" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="585.4736842105264" cy="38.51500809214231" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="596.3157894736843" cy="35.04285013378694" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="607.1578947368421" cy="33.46362819068355" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="618" cy="30.855088414433517" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="628.8421052631579" cy="30.243239664183243" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="639.6842105263158" cy="30.13447182165352" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="650.5263157894736" cy="29.722497842129435" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="661.3684210526316" cy="28.755152571614538" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="672.2105263157895" cy="26.89661252362946" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="683.0526315789473" cy="26.0658911386093" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="693.8947368421052" cy="24.957931642944963" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="704.7368421052631" cy="23.604240663765484" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="715.5789473684212" cy="23.48412502323727" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="726.421052631579" cy="22.866385200899398" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><circle cx="737.2631578947369" cy="20.98310213156379" r="4" class="C-Sweden" fill="#1f77b4" style="opacity: 1;"></circle><path fill="none" class="C-Norway" stroke="#ff7f0e" stroke-width="4" d="M0,491.0919786423164L10.842105263157894,478.7634724525334L21.684210526315788,478.7634724525334L32.526315789473685,478.7634724525334L43.368421052631575,478.7634724525334L54.21052631578947,450.23768677960095L65.05263157894737,435.65615886169627L75.89473684210526,423.3276526719132L86.73684210526315,423.3276526719132L97.57894736842105,398.9041498955591L108.42105263157895,383.62412860950946L119.26315789473684,376.9555191484866L130.10526315789474,357.21239506885485L140.94736842105263,341.3908890990182L151.78947368421052,331.743426656559L162.6315789473684,321.5196993678664L173.4736842105263,308.28235405381474L184.31578947368422,304.31574037091536L195.1578947368421,293.47522095870613L206,288.0325103343188L216.8421052631579,275.40390254556536L227.68421052631578,265.28808215287137L238.52631578947367,259.92876776365813L249.3684210526316,256.3092821399303L260.2105263157895,252.17161902499785L271.05263157894734,246.34075550761452L281.89473684210526,242.67704705595034L292.7368421052632,239.7471596356005L303.57894736842104,233.65600381884732L314.42105263157896,232.59669055369858L325.2631578947368,227.99610709008715L336.10526315789474,226.51956701740693L346.9473684210526,226.03338325704576L357.7894736842106,218.63138899318568L368.63157894736844,218.1907433479947L379.4736842105263,216.02321279026387L390.3157894736842,213.08409530404927L401.1578947368421,211.04894777525107L412,210.24917128755143L422.8421052631579,210.24917128755143L433.6842105263158,208.67321916691273L444.5263157894737,208.2840360033849L455.36842105263156,207.89673751147131L466.2105263157895,206.74596971115955L477.05263157894734,206.74596971115955L487.89473684210526,206.36603083849158L498.7368421052632,206.36603083849158L509.57894736842104,205.23692527620096L520.421052631579,204.8640715366245L531.2631578947369,204.49294798303796L542.1052631578947,204.1235386321132L552.9473684210526,203.75582772098343L563.7894736842105,203.38979970320725L574.6315789473683,203.38979970320725L585.4736842105264,201.58437354943254L596.3157894736843,200.16881478529967L607.1578947368421,199.81880555145858L618,198.77787568652528L628.8421052631579,198.77787568652528L639.6842105263158,198.77787568652528L650.5263157894736,198.77787568652528L661.3684210526316,198.43388813565088L672.2105263157895,198.43388813565088L683.0526315789473,198.09137376937892L693.8947368421052,197.75032002317772L704.7368421052631,197.75032002317772L715.5789473684212,197.75032002317772L726.421052631579,197.75032002317772L737.2631578947369,197.75032002317772L748.1052631578948,197.75032002317772" style="opacity: 1;"></path><circle cx="0" cy="491.0919786423164" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="10.842105263157894" cy="478.7634724525334" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="21.684210526315788" cy="478.7634724525334" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="32.526315789473685" cy="478.7634724525334" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="43.368421052631575" cy="478.7634724525334" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="54.21052631578947" cy="450.23768677960095" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="65.05263157894737" cy="435.65615886169627" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="75.89473684210526" cy="423.3276526719132" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="86.73684210526315" cy="423.3276526719132" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="97.57894736842105" cy="398.9041498955591" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="108.42105263157895" cy="383.62412860950946" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="119.26315789473684" cy="376.9555191484866" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="130.10526315789474" cy="357.21239506885485" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="140.94736842105263" cy="341.3908890990182" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="151.78947368421052" cy="331.743426656559" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="162.6315789473684" cy="321.5196993678664" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="173.4736842105263" cy="308.28235405381474" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="184.31578947368422" cy="304.31574037091536" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="195.1578947368421" cy="293.47522095870613" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="206" cy="288.0325103343188" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="216.8421052631579" cy="275.40390254556536" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="227.68421052631578" cy="265.28808215287137" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="238.52631578947367" cy="259.92876776365813" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="249.3684210526316" cy="256.3092821399303" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="260.2105263157895" cy="252.17161902499785" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="271.05263157894734" cy="246.34075550761452" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="281.89473684210526" cy="242.67704705595034" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="292.7368421052632" cy="239.7471596356005" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="303.57894736842104" cy="233.65600381884732" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="314.42105263157896" cy="232.59669055369858" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="325.2631578947368" cy="227.99610709008715" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="336.10526315789474" cy="226.51956701740693" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="346.9473684210526" cy="226.03338325704576" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="357.7894736842106" cy="218.63138899318568" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="368.63157894736844" cy="218.1907433479947" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="379.4736842105263" cy="216.02321279026387" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="390.3157894736842" cy="213.08409530404927" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="401.1578947368421" cy="211.04894777525107" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="412" cy="210.24917128755143" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="422.8421052631579" cy="210.24917128755143" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="433.6842105263158" cy="208.67321916691273" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="444.5263157894737" cy="208.2840360033849" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="455.36842105263156" cy="207.89673751147131" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="466.2105263157895" cy="206.74596971115955" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="477.05263157894734" cy="206.74596971115955" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="487.89473684210526" cy="206.36603083849158" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="498.7368421052632" cy="206.36603083849158" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="509.57894736842104" cy="205.23692527620096" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="520.421052631579" cy="204.8640715366245" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="531.2631578947369" cy="204.49294798303796" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="542.1052631578947" cy="204.1235386321132" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="552.9473684210526" cy="203.75582772098343" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="563.7894736842105" cy="203.38979970320725" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="574.6315789473683" cy="203.38979970320725" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="585.4736842105264" cy="201.58437354943254" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="596.3157894736843" cy="200.16881478529967" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="607.1578947368421" cy="199.81880555145858" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="618" cy="198.77787568652528" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="628.8421052631579" cy="198.77787568652528" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="639.6842105263158" cy="198.77787568652528" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="650.5263157894736" cy="198.77787568652528" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="661.3684210526316" cy="198.43388813565088" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="672.2105263157895" cy="198.43388813565088" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="683.0526315789473" cy="198.09137376937892" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="693.8947368421052" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="704.7368421052631" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="715.5789473684212" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="726.421052631579" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="737.2631578947369" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle><circle cx="748.1052631578948" cy="197.75032002317772" r="4" class="C-Norway" fill="#ff7f0e" style="opacity: 1;"></circle></g></svg>
