@@ -3,7 +3,6 @@
 
 <title>Dynamic Population / Spreader Model</title>
 
-
 <table style="width:100%">
 <tr>
  <td>Transmission Parameters:</td>
@@ -15,15 +14,15 @@
     <input type="number" id="r0-value">
  </td>
   <td>
-    <label for="group_skew">Group Skew (Alpha):</label>
-    <input type="range" min="1.01" max="10.0" id="group_skew" step=.01>
-    <input type="number" id="group_skew-value">
- </td>
-  <td>
     <label for="cross_infection">Cross Infection (R0):</label>
     <input type="range" min="0" max="1.0" id="cross_infection" step=.0001>
     <input type="number" id="cross_infection-value">
  </td>
+ </tr>
+ <tr>
+   <td>Lockdown Parameters:</td>
+ </tr>
+ <tr>
  <td>
     <label for="lockdown_start">Lockdown Start:</label>
     <input type="range" min="0" max="101" id="lockdown_start">
@@ -35,20 +34,25 @@
     <input type="number" id="lockdown_end-value">
  </td>
  <td>
-    <label for="lockdown_factor">Lockdown Factor:</label>
-    <input type="range" min="1.0" max="10.0" id="lockdown_factor" step=.01>
-    <input type="number" id="lockdown_factor-value">
- </td> 
-  <td>
-    <label for="lockdown_cross_infection_factor">Lockdown Cross Infection Factor:</label>
-    <input type="range" min="0.0" max="10.0" id="lockdown_cross_infection_factor" step=.01>
-    <input type="number" id="lockdown_cross_infection_factor-value">
- </td> 
- <td>
     <label for="lockdown_affected_percentage">Lockdown Percentage Affected:</label>
     <input type="range" min="0.0" max="100.0" id="lockdown_affected_percentage">
     <input type="number" id="lockdown_affected_percentage-value">
  </td> 
+</tr>
+ <tr>
+   <td>Lockdown Transmission Parameters:</td>
+ </tr>
+ <tr>
+ <td>
+    <label for="lockdown_r0">Population Spread (R0):</label>
+    <input type="range" min="0" max="3.0" id="lockdown_r0" step=.01>
+    <input type="number" id="lockdown_r0-value">
+ </td>
+  <td>
+    <label for="lockdown_cross_infection">Cross Infection (R0):</label>
+    <input type="range" min="0" max="1.0" id="lockdown_cross_infection" step=.0001>
+    <input type="number" id="lockdown_cross_infection-value">
+ </td>
 </tr>
 <tr>
  <td>Population Parameters:</td>
@@ -62,7 +66,27 @@
  <td>
   <label for="groups">Number Groups:</label>
   <input type="range" min="0" max="10000" id="groups" step=1>
-  <input type="number" id="groups-value" size="100"> 
+  <input type="number" id="groups-value" size="10"> 
+ </td>
+<td>
+  <label for="group_skew">Group Skew (Alpha):</label>
+  <input type="range" min="1.01" max="10.0" id="group_skew" step=.01>
+  <input type="number" id="group_skew-value">
+</td>
+</tr>
+<tr>
+ <td>Graph Parameters:</td>
+</tr>
+<tr>
+ <td>
+  <label for="total_infected_max">Percentage Infected Display Max:</label>
+  <input type="range" min="0" max="100" id="total_infected_max" step=1>
+  <input type="number" id="total_infected_max-value" size="10">
+ </td>
+ <td>
+  <label for="infected_max">Current Infected Display Max:</label>
+  <input type="range" min="0" max="100000" id="infected_max" step=1>
+  <input type="number" id="infected_max-value" size="100"> 
  </td>
 </tr>
 <tr>
@@ -87,35 +111,46 @@ function drawChart(simulation_data) {
 
   var data = new google.visualization.DataTable();
   data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
   data.addColumn('number', "Percent Infected");
   data.addColumn('number', "Infected Per Million");
   for (var i in simulation_data) {
+    annotation = null
+    if (i == params.lockdown_start) {
+      annotation = 'Lockdown Start'
+    } else if (i == params.lockdown_end) {
+      annotation = 'Lockdown End'
+    }
     simulation_point = simulation_data[i]
-    data.addRow([simulation_point.day, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
+    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
   }
 
   var options = {
-    chart: {
-      title: 'Infections over time'
-    },
+    title: 'Infections over time',
     width: 900,
     height: 500,
+    // Gives each series an axis that matches the vAxes number below.
     series: {
-      // Gives each series an axis name that matches the Y-axis below.
-      0: {axis: 'Percentage Ever Infected'},
-      1: {axis: 'Infected Per Million'}
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Percentage Infected'},
+      1: {title: 'Infected Per Million'}
     },
-    axes: {
-      // Adds labels to each axis; they don't have to match the axis names.
-      y: {
-        TotalInfected: {label: 'Percentage Infected'},
-        NewInfected: {label: 'Infected Per Million',}
-      }
+    annotations: {
+      style: 'line'
     }
   };
+  if (params.total_infected_max != 0) {
+    options.vAxes[0].maxValue = params.total_infected_max
+  }
+  if (params.infected_max != 0) {
+    options.vAxes[1].maxValue = params.infected_max
+  }
 
-
-  var chart = new google.charts.Line(document.getElementById('curve_chart'));
+  var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
 
   chart.draw(data, options);
 }
@@ -129,29 +164,44 @@ function paramOrDefault(w, param, default_val) {
   
 }
   
+function defaultParams() {
+  return {
+    r0: 1.0,
+    group_skew: 2.0,
+    cross_infection: 0.1,
+    pop: 50000,
+    groups: 2000,
+    lockdown_start: 101,
+    lockdown_end: 101,
+    lockdown_r0: 1.0,
+    lockdown_cross_infection: .1,
+    lockdown_affected_percentage: 100,
+    infected_max: 0,
+    total_infected_max: 0
+  } 
+}
+
 function getParams() {
   let w = new URLSearchParams(window.location.search)
 
-  return {
-    r0: paramOrDefault(w, "r0", 1.0),
-    group_skew: paramOrDefault(w, "group_skew", 2.0),
-    cross_infection: paramOrDefault(w, "cross_infection", 0.1),
-    pop: paramOrDefault(w, "pop", 50000),
-    groups: paramOrDefault(w, "groups", 2000),
-    lockdown_start: paramOrDefault(w, "lockdown_start", 101),
-    lockdown_end: paramOrDefault(w, "lockdown_end", 101),
-    lockdown_factor: paramOrDefault(w, "lockdown_factor", 2),
-    lockdown_cross_infection_factor: paramOrDefault(w, "lockdown_cross_infection_factor", 1),
-    lockdown_affected_percentage: paramOrDefault(w, "lockdown_affected_percentage", 100)
-  }
+  default_params = defaultParams()
+  params = {}
+  for (let [key, value] of Object.entries(default_params)) {
+     params[key] = paramOrDefault(w, key, value)
+  } 
+  return params
+
 }
 
 params = getParams() 
 INFECTED_DAYS = 5
 function makeWindowParams() {
+  original_params = defaultParams()
   parts = []
   for (let [key, value] of Object.entries(params)) {
-     parts.push(key + "=" + value)
+     if (value != original_params[key]) {
+      parts.push(key + "=" + value)
+     }
   } 
   return parts.join("&")  
 }
@@ -186,6 +236,8 @@ function initialState() {
    groups = []
    total_r0 = 0.0
    expected_total = params.r0 * params.groups
+   expected_lockdown_total = params.lockdown_r0 * params.groups
+
    for(i=0 ; i < params.groups; i++) {
     group_r0 = paretoDistribution(params.group_skew, (i + .5) / params.groups)
     total_r0 += group_r0
@@ -198,7 +250,9 @@ function initialState() {
     })}
 
     for (group_index in groups) {
-      groups[group_index].r0 = groups[group_index].r0 * (expected_total / total_r0)
+      r0 = groups[group_index].r0
+      groups[group_index].r0 = r0 * (expected_total / total_r0)
+      groups[group_index].lockdown_r0 = r0 * (expected_lockdown_total / total_r0)
     }
 
    return groups
@@ -218,15 +272,16 @@ function expectedNewInfections(state, new_infections) {
 
 function groupR0(group, day, group_index) {
   in_lockdown = day >= params.lockdown_start && day <= params.lockdown_end && (group_index + 50) % 100 <= params.lockdown_affected_percentage
-  current_r0 = group.r0
-  cross_infection = params.cross_infection
   if (in_lockdown) {
-    current_r0 /= params.lockdown_factor
-    cross_infection /= params.lockdown_cross_infection_factor
-  }
-  return {
-    current_r0: current_r0,
-    cross_infection: cross_infection
+    return {
+      current_r0: group.lockdown_r0,
+      cross_infection: params.lockdown_cross_infection
+    }
+  } else {
+    return {
+      current_r0: group.r0,
+      cross_infection: params.cross_infection
+    }
   }
 }
 
@@ -268,7 +323,8 @@ function advanceState(current_groups, day) {
       population: group.population,
       infected: AddInfections(group.infected, actual_infections),
       ever_sick: group.ever_sick + actual_infections,
-      r0: group.r0
+      r0: group.r0,
+      lockdown_r0: group.lockdown_r0
     })
    }
    return new_groups
@@ -301,72 +357,6 @@ function AddR0Stats(data) {
     prev_sick = new_sick
   }
 }
-
-function drawGraph(data){
-
-  function y_func(d) {
-    return d.ever_sick * 100 / d.population
-  }
-
-  // set the dimensions and margins of the graph
-  var margin = {top: 20, right: 20, bottom: 30, left: 50},
-      width = 960 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
-
-  // set the ranges
-  var x = d3.scaleLinear().range([0, width]);
-  var y = d3.scaleLinear().range([height, 0]);
-
-  // define the line
-  var valueline = d3.line()
-      .x(function(d) { return x(d.day); })
-      .y(function(d) { return y(y_func(d)); });
-
-  // append the svg obgect to the body of the page
-  // appends a 'group' element to 'svg'
-  // moves the 'group' element to the top left margin
-  d3.select("body").select("svg").remove();
-  var svg = d3.select("body").append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-
-  // Scale the range of the data
-  x.domain([0, d3.max(data, function(d) { return d.day; })]);
-  if (params.ymax == 0) {
-     y.domain([0, d3.max(data, function(d) { return y_func(d) })]);
-  } else {
-    y.domain([0, params.ymax])
-  }
-  
-  // Add the valueline path.
-  svg.append("path")
-      .data([data])
-      .attr("class", "line")
-      .attr("d", valueline);
-
-  // Add the X Axis
-  svg.append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x));
-
-  // Add the Y Axis
-  svg.append("g")
-      .call(d3.axisLeft(y));
-  
-  // text label for the y axis
-  svg.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left)
-      .attr("x",0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .text("Percentage Infected");     
-}
-
-
 
 function updateGraph() {
   groups = initialState();
