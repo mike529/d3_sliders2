@@ -39,6 +39,16 @@
     <input type="range" min="1.0" max="10.0" id="lockdown_factor" step=.01>
     <input type="number" id="lockdown_factor-value">
  </td> 
+  <td>
+    <label for="lockdown_cross_infection_factor">Lockdown Cross Infection Factor:</label>
+    <input type="range" min="0.0" max="10.0" id="lockdown_cross_infection_factor" step=.01>
+    <input type="number" id="lockdown_cross_infection_factor-value">
+ </td> 
+ <td>
+    <label for="lockdown_affected_percentage">Lockdown Percentage Affected:</label>
+    <input type="range" min="0.0" max="100.0" id="lockdown_affected_percentage">
+    <input type="number" id="lockdown_affected_percentage-value">
+ </td> 
 </tr>
 <tr>
  <td>Population Parameters:</td>
@@ -130,12 +140,14 @@ function getParams() {
     groups: paramOrDefault(w, "groups", 2000),
     lockdown_start: paramOrDefault(w, "lockdown_start", 101),
     lockdown_end: paramOrDefault(w, "lockdown_end", 101),
-    lockdown_factor: paramOrDefault(w, "lockdown_factor", 2)
+    lockdown_factor: paramOrDefault(w, "lockdown_factor", 2),
+    lockdown_cross_infection_factor: paramOrDefault(w, "lockdown_cross_infection_factor", 1),
+    lockdown_affected_percentage: paramOrDefault(w, "lockdown_affected_percentage", 100)
   }
 }
 
 params = getParams() 
-
+INFECTED_DAYS = 5
 function makeWindowParams() {
   parts = []
   for (let [key, value] of Object.entries(params)) {
@@ -160,6 +172,16 @@ function paretoDistribution (alpha, uniform_random) {
     return (alpha - 1) * unscaled / alpha
 }
 
+
+function initialInfected(num_infected, infected_days) {
+  infection = []
+  for (var i = 0; i < infected_days; i++) {
+    infection.push(0)
+  }
+  infection[0] = num_infected
+  return infection
+}
+
 function initialState() {
    groups = []
    total_r0 = 0.0
@@ -170,7 +192,7 @@ function initialState() {
     infected = 1 / params.groups
     groups.push({
       population: params.pop,
-      infected: infected,
+      infected: initialInfected(infected, INFECTED_DAYS),
       ever_sick: infected,
       r0: group_r0
     })}
@@ -194,13 +216,35 @@ function expectedNewInfections(state, new_infections) {
   return (state.population - state.ever_sick) * prob_selected 
 }
 
-function groupR0(group, day) {
-  in_lockdown = day >= params.lockdown_start && day <= params.lockdown_end
+function groupR0(group, day, group_index) {
+  in_lockdown = day >= params.lockdown_start && day <= params.lockdown_end && (group_index + 50) % 100 <= params.lockdown_affected_percentage
   current_r0 = group.r0
+  cross_infection = params.cross_infection
   if (in_lockdown) {
     current_r0 /= params.lockdown_factor
+    cross_infection /= params.lockdown_cross_infection_factor
   }
-  return current_r0
+  return {
+    current_r0: current_r0,
+    cross_infection: cross_infection
+  }
+}
+
+function AddInfections(existing_infections, new_infections) {
+  added_infections = []
+  added_infections.push(new_infections)
+  for (var i = 0; i < existing_infections.length - 1; i++) {
+    added_infections.push(existing_infections[i])
+  }
+  return added_infections
+}
+
+function AllInfected(group_infections) {
+  total_infected = 0
+  for (var i in group_infections) {
+    total_infected += group_infections[i]
+  }
+  return total_infected
 }
 
 function advanceState(current_groups, day) {
@@ -209,17 +253,20 @@ function advanceState(current_groups, day) {
    total_population = 0
    for (i = 0; i < current_groups.length; i++) {
     total_population += current_groups[i].population
-    global_infections += current_groups[i].infected * groupR0(current_groups[i], day) * params.cross_infection
+    group_params = groupR0(current_groups[i], day, i)
+    global_infections += AllInfected(current_groups[i].infected) * group_params.current_r0 * group_params.cross_infection / INFECTED_DAYS
    }
 
    for (i = 0; i < current_groups.length; i++) {
     group = current_groups[i]
-    group_infections = group.infected * groupR0(group, day) * (1.0 - params.cross_infection)
+    group_params = groupR0(group, day, i)
+
+    group_infections = AllInfected(current_groups[i].infected) * group_params.current_r0 * (1.0 - group_params.cross_infection) / INFECTED_DAYS
     group_global_infections = global_infections * group.population / total_population
     actual_infections = expectedNewInfections(group, group_infections + group_global_infections)
     new_groups.push({
       population: group.population,
-      infected: actual_infections,
+      infected: AddInfections(group.infected, actual_infections),
       ever_sick: group.ever_sick + actual_infections,
       r0: group.r0
     })
@@ -234,7 +281,7 @@ function getTotalParams(current_groups, day) {
   for (i = 0; i < current_groups.length; i++) {
     total_infected += current_groups[i].ever_sick
     total_population += current_groups[i].population
-    total_sick += current_groups[i].infected
+    total_sick += current_groups[i].infected[0]
   }
   return {
     day: day,
