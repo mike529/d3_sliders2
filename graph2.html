@@ -34,7 +34,7 @@
     <input type="number" id="lockdown_end-value">
  </td>
  <td>
-    <label for="lockdown_affected_percentage">Lockdown Percentage Affected:</label>
+    <label for="lockdown_in_aff">Lockdown Percentage Affected:</label>
     <input type="range" min="0.0" max="100.0" id="lockdown_affected_percentage">
     <input type="number" id="lockdown_affected_percentage-value">
  </td> 
@@ -70,7 +70,7 @@
  </td>
 <td>
   <label for="group_skew">Group Skew (Alpha):</label>
-  <input type="range" min="1.01" max="10.0" id="group_skew" step=.01>
+  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
   <input type="number" id="group_skew-value">
 </td>
 </tr>
@@ -88,6 +88,11 @@
   <input type="range" min="0" max="100000" id="infected_max" step=1>
   <input type="number" id="infected_max-value" size="100"> 
  </td>
+ <td>
+  <label for="days">Simulation days:</label>
+  <input type="range" min="0" max="365" id="days" step=1>
+  <input type="number" id="days-value" size="100"> 
+ </td> 
 </tr>
 <tr>
  </td>
@@ -171,13 +176,14 @@ function defaultParams() {
     cross_infection: 0.1,
     pop: 50000,
     groups: 2000,
-    lockdown_start: 101,
-    lockdown_end: 101,
+    lockdown_start: -1,
+    lockdown_end: -1,
     lockdown_r0: 1.0,
     lockdown_cross_infection: .1,
     lockdown_affected_percentage: 100,
     infected_max: 0,
-    total_infected_max: 0
+    total_infected_max: 0,
+    days: 100
   } 
 }
 
@@ -239,9 +245,9 @@ function initialState() {
    expected_lockdown_total = params.lockdown_r0 * params.groups
 
    for(i=0 ; i < params.groups; i++) {
-    group_r0 = paretoDistribution(params.group_skew, (i + .5) / params.groups)
+    group_r0 =  Math.pow((2 * i + 1), params.group_skew) / params.groups
     total_r0 += group_r0
-    infected = 1 / params.groups
+    infected = 1
     groups.push({
       population: params.pop,
       infected: initialInfected(infected, INFECTED_DAYS),
@@ -362,7 +368,7 @@ function updateGraph() {
   groups = initialState();
   data = []
   data.push(getTotalParams(groups, 0))
-  for(day = 1; day <= 100; day++) {
+  for(day = 1; day <= params.days; day++) {
     groups = advanceState(groups, day);
     data.push(getTotalParams(groups, day));
   }
