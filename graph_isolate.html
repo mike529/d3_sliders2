@@ -115,7 +115,7 @@ function drawChart(simulation_data) {
   }
 
   var options = {
-    title: 'Deaths over time',
+    title: params.title,
     width: 900,
     height: 500,
     // Gives each series an axis that matches the vAxes number below.
@@ -138,7 +138,11 @@ function drawChart(simulation_data) {
   chart.draw(data, options);
   return chart;
 }
+
 function paramOrDefault(w, param, default_val) {
+  if (param == "title") {
+    return w.get(param) || default_val
+  }
   let val = parseFloat(w.get(param))
   if(val == 0) {
     return 0
@@ -159,7 +163,8 @@ function defaultParams() {
     lockdown_isolation: .9,
     lockdown_start: 30,
     lockdown_end: 70,
-    days: 100
+    days: 100,
+    title: "Deaths Over Time"
   } 
 }
 

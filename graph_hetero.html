@@ -10,30 +10,30 @@
 <tr>
  <td>
     <label for="r0">Population Spread (R0):</label>
-    <input type="range" min="0" max="5.0" id="r0" step=.01>
+    <input type="range" min="0" max="3.0" id="r0" step=.01>
     <input type="number" id="r0-value">
  </td>
   <td>
-    <label for="lockdown_r0">Lockdown (R0):</label>
-    <input type="range" min="0" max="5.0" id="lockdown_r0" step=.0001>
-    <input type="number" id="lockdown_r0-value">
- </td>
- <td>
-  <label for="test_growth">Testing Growth (infections/ 1M / day):</label>
-  <input type="range" min="0" max="50" id="test_growth" step=.1>
-  <input type="number" id="test_growth-value" size="10">
- </td>
-<td>
-  <label for="test_start_day">Testing Start Day:</label>
-  <input type="range" min="0" max="50" id="test_start_day" step=.1>
-  <input type="number" id="test_start_day-value" size="10">
- </td>
- <td>
-  <label for="test_r0_reduction">Test R0 Reduction Factor:</label>
-  <input type="range" min="1" max="10" id="test_r0_reduction" step=.1>
-  <input type="number" id="test_r0_reduction-value" size="10">
+    <label for="cross_infection">Cross Infection (R0):</label>
+    <input type="range" min="0" max="1.0" id="cross_infection" step=.0001>
+    <input type="number" id="cross_infection-value">
  </td>
  </tr>
+ <tr>
+   <td>Lockdown Transmission Parameters:</td>
+ </tr>
+ <tr>
+ <td>
+    <label for="lockdown_r0">Population Spread (R0):</label>
+    <input type="range" min="0" max="3.0" id="lockdown_r0" step=.01>
+    <input type="number" id="lockdown_r0-value">
+ </td>
+  <td>
+    <label for="lockdown_cross_infection">Cross Infection (R0):</label>
+    <input type="range" min="0" max="1.0" id="lockdown_cross_infection" step=.0001>
+    <input type="number" id="lockdown_cross_infection-value">
+ </td>
+</tr>
  <tr>
    <td>Lockdown Parameters:</td>
  </tr>
@@ -53,16 +53,21 @@
  <td>Population Parameters:</td>
 </tr>
 <tr>
- <td>
-  <label for="pop">Population:</label>
-  <input type="range" min="10000" max="10000000" id="pop" step=10000>
-  <input type="number" id="pop-value" size="10">
- </td>
+<td>
+  <label for="group_skew">Group Skew (Alpha):</label>
+  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
+  <input type="number" id="group_skew-value">
+</td>
 </tr>
 <tr>
  <td>Graph Parameters:</td>
 </tr>
 <tr>
+ <td>
+  <label for="total_infected_max">Percentage Infected Display Max:</label>
+  <input type="range" min="0" max="100" id="total_infected_max" step=1>
+  <input type="number" id="total_infected_max-value" size="10">
+ </td>
  <td>
   <label for="infected_max">Current Infected Display Max:</label>
   <input type="range" min="0" max="100000" id="infected_max" step=1>
@@ -94,31 +99,14 @@
 <script>
 
 
-function testablePercentage(day, current_infections_per_mill) {
-  current_testing_capacity = (day - params.test_start_day) * params.test_growth
-  if (current_testing_capacity < 0) {
-    return 0
-  }
-  if (current_testing_capacity > current_infections_per_mill) {
-    return 1
-  }
-  return current_testing_capacity / current_infections_per_mill
-}
 
 function drawChart(simulation_data) {
-
-  function tooltip(point) {
-    current_infections_per_mill = point.all_now_infected * 1e6 / point.population
-    current_testing_capacity = (point.day)
-    return "Infected Per Million: " + Math.round(current_infections_per_mill) + "\n" + " Testable Percentage: " + (testablePercentage(point.day, current_infections_per_mill) * 100).toFixed(2) + "%"
-  }
 
   var data = new google.visualization.DataTable();
   data.addColumn('number', 'Day');
   data.addColumn({type: 'string', role: 'annotation'});
   data.addColumn('number', "Percent Infected");
   data.addColumn('number', "Infected Per Million");
-  data.addColumn({type: 'string', role: 'tooltip'})
   for (var i in simulation_data) {
     annotation = null
     if (i == params.lockdown_start) {
@@ -127,7 +115,7 @@ function drawChart(simulation_data) {
       annotation = 'Lockdown End'
     }
     simulation_point = simulation_data[i]
-    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population, tooltip(simulation_point)])
+    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
   }
 
   var options = {
@@ -169,20 +157,23 @@ function paramOrDefault(w, param, default_val) {
   if(val == 0) {
     return 0
   }
-  return val || default_val 
+  return val || default_val
+  
 }
   
 function defaultParams() {
   return {
-    r0: 2.0,
-    pop: 1e8,
-    test_growth: 10,
-    test_start_day: 30,
-    test_r0_reduction: 2,
-    lockdown_start: 30,
-    lockdown_end: 70,
-    lockdown_r0: 1.5,
+    r0: 1.0,
+    group_skew: 2.0,
+    cross_infection: 0.1,
+    pop: 1e5,
+    groups: 1e3,
+    lockdown_start: -1,
+    lockdown_end: -1,
+    lockdown_r0: 1.0,
+    lockdown_cross_infection: .1,
     infected_max: 0,
+    total_infected_max: 0,
     days: 100,
     title: "Infections Over Time"
   } 
@@ -235,20 +226,20 @@ function initialInfected(num_infected, infected_days) {
 function initialState() {
    groups = []
    total_r0 = 0.0
-   expected_total = params.r0
-   expected_lockdown_total = params.lockdown_r0
+   expected_total = params.r0 * params.groups
+   expected_lockdown_total = params.lockdown_r0 * params.groups
 
-   for(i=0 ; i < 1; i++) {
-    group_r0 = params.r0
-    total_r0 += params.r0
-    infected = 1000
+   for(i=0 ; i < params.groups; i++) {
+    group_r0 =  Math.pow((2 * i + 1), params.group_skew) / params.groups
+    total_r0 += group_r0
+    infected = 1
     groups.push({
       population: params.pop,
       infected: initialInfected(infected, INFECTED_DAYS),
       ever_sick: infected,
       r0: group_r0,
-      cross_infection: 1,
-      lockdown_cross_infection: 1
+      cross_infection: params.cross_infection,
+      lockdown_cross_infection: params.lockdown_cross_infection
     })}
 
     for (group_index in groups) {
@@ -308,26 +299,21 @@ function AllInfected(group_infections) {
 
 function advanceState(current_groups, day) {
    new_groups = []
+   global_infections = 0
+   total_population = 0
+   for (i = 0; i < current_groups.length; i++) {
+    total_population += current_groups[i].population
+    group_params = groupR0(current_groups[i], day, i)
+    global_infections += AllInfected(current_groups[i].infected) * group_params.current_r0 * group_params.cross_infection / INFECTED_DAYS
+   }
 
    for (i = 0; i < current_groups.length; i++) {
     group = current_groups[i]
     group_params = groupR0(group, day, i)
-    current_infections_per_mill = AllInfected(group.infected) * 1e6 / group.population
-    current_testing_capacity = (day - params.test_start_day) * params.test_growth
-    if (current_testing_capacity > current_infections_per_mill) {
-      current_testing_capacity = current_infections_per_mill
-    }
-    if (current_testing_capacity < 0) {
-      current_testing_capacity = 0
-    }
-    tested_r0 = group_params.current_r0 / params.test_r0_reduction
-    untested_r0 = group_params.current_r0
-    actual_r0 = ((tested_r0 * current_testing_capacity) + (untested_r0 * (current_infections_per_mill - current_testing_capacity))) / current_infections_per_mill
 
-
-
-    group_infections = AllInfected(current_groups[i].infected) * actual_r0 / INFECTED_DAYS
-    actual_infections = expectedNewInfections(group, group_infections)
+    group_infections = AllInfected(current_groups[i].infected) * group_params.current_r0 * (1.0 - group_params.cross_infection) / INFECTED_DAYS
+    group_global_infections = global_infections * group.population / total_population
+    actual_infections = expectedNewInfections(group, group_infections + group_global_infections)
     new_groups.push({
       population: group.population,
       infected: AddInfections(group.infected, actual_infections),
@@ -342,36 +328,33 @@ function advanceState(current_groups, day) {
 }
 
 function getTotalParams(current_groups, day) {
-  var total_infected = 0
-  var total_population = 0
-  var total_sick = 0
-  var all_now_infected = 0
+  total_infected = 0
+  total_population = 0
+  total_sick = 0
   for (i = 0; i < current_groups.length; i++) {
     total_infected += current_groups[i].ever_sick
     total_population += current_groups[i].population
     total_sick += current_groups[i].infected[0]
-    all_now_infected += AllInfected(current_groups[i].infected)
   }
   return {
     day: day,
     ever_sick: total_infected,
     population: total_population,
-    infected: total_sick,
-    all_now_infected: all_now_infected
+    infected: total_sick
   }
 }
 
 
 function updateGraph() {
-  lockdown_groups = initialState();
-  lockdown_data = []
-  lockdown_data.push(getTotalParams(groups, 0))
+  groups = initialState();
+  data = []
+  data.push(getTotalParams(groups, 0))
   for(day = 1; day <= params.days; day++) {
     groups = advanceState(groups, day);
-    lockdown_data.push(getTotalParams(groups, day));
+    data.push(getTotalParams(groups, day));
   }
 
-  chart = drawChart(lockdown_data);
+  chart = drawChart(data);
   var copyText = document.getElementById("myInput");
   copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
   var graphLink = document.getElementById("graphImage");
