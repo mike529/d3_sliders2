@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>Dynamic Population / Spreader Model</title>
+
+<table style="width:100%">
+<tr>
+ <td>Transmission Parameters:</td>
+</tr>
+<tr>
+ <td>
+    <label for="r0">Population Spread (R0):</label>
+    <input type="range" min="0" max="5.0" id="r0" step=.01>
+    <input type="number" id="r0-value">
+ </td>
+<td>
+    <label for="lockdown_young_r0">Young Lockdown (R0):</label>
+    <input type="range" min="0" max="5.0" id="lockdown_young_r0" step=.0001>
+    <input type="number" id="lockdown_young_r0-value">
+ </td>
+ <td>
+    <label for="lockdown_old_r0">Old Lockdown (R0):</label>
+    <input type="range" min="0" max="5.0" id="lockdown_old_r0" step=.0001>
+    <input type="number" id="lockdown_old_r0-value">
+ </td>
+ <td>
+    <label for="lockdown_isolation">Lockdown Isolation:</label>
+    <input type="range" min="0" max="1.0" id="lockdown_isolation">
+    <input type="number" id="lockdown_isolation-value">
+ </td>
+ </tr>
+ <tr>
+   <td>Lockdown Parameters:</td>
+ </tr>
+ <tr>
+ <td>
+    <label for="lockdown_start">Lockdown Start:</label>
+    <input type="range" min="0" max="101" id="lockdown_start">
+    <input type="number" id="lockdown_start-value">
+ </td>
+ <td>
+    <label for="lockdown_end">Lockdown End:</label>
+    <input type="range" min="0" max="100" id="lockdown_end">
+    <input type="number" id="lockdown_end-value">
+ </td>
+</tr>
+<tr>
+ <td>Population Parameters:</td>
+</tr>
+<tr>
+ <td>
+  <label for="old_percentage">Percentage Old:</label>
+  <input type="range" min="0" max="100" id="old_percentage" step=.1>
+  <input type="number" id="old_percentage-value" size="10"> </td>
+ <td>
+  <label for="young_death">Young Death Percentage:</label>
+  <input type="range" min="0" max="100" id="young_death" step=.1>
+  <input type="number" id="young_death-value" size="10">
+ </td>
+ <td>
+  <label for="old_death">Old Death Percentage:</label>
+  <input type="range" min="0" max="100" id="old_death" step=.1>
+  <input type="number" id="old_death-value" size="10">
+ </td>
+
+
+</tr>
+<tr>
+ <td>Graph Parameters:</td>
+</tr>
+<tr>
+ <td>
+  <label for="days">Simulation days:</label>
+  <input type="range" min="0" max="365" id="days" step=1>
+  <input type="number" id="days-value" size="100"> 
+ </td> 
+</tr>
+<tr>
+ </td>
+ <td>
+   <a href="" id="myInput">Permalink</a>
+ </td>
+ <td>
+    <a href="" id="graphImage" title="On chrome right click and open in new tab.">Graph Image Link</a>
+</td>
+</tr>
+
+
+</table>
+
+<div id="curve_chart"></div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+
+
+function drawChart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Total Dead Per Million");
+  data.addColumn('number', "Dead Per Million");
+  for (var i in simulation_data) {
+    annotation = null
+    if (i == params.lockdown_start) {
+      annotation = 'Lockdown Start'
+    } else if (i == params.lockdown_end) {
+      annotation = 'Lockdown End'
+    }
+    simulation_point = simulation_data[i]
+    data.addRow([simulation_point.day, annotation, (simulation_point.total_dead * 1e6) / simulation_point.population, simulation_point.dead * 1e6 / simulation_point.population])
+  }
+
+  var options = {
+    title: 'Deaths over time',
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Total Deaths Per Million'},
+      1: {title: 'Deaths Per Million'}
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+
+  var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+function paramOrDefault(w, param, default_val) {
+  let val = parseFloat(w.get(param))
+  if(val == 0) {
+    return 0
+  }
+  return val || default_val
+  
+}
+  
+function defaultParams() {
+  return {
+    r0: 2.0,
+    pop: 1e8,
+    old_percentage: 10
+    young_death: .5,
+    old_death: 5,
+    lockdown_young_r0: 2.0,
+    lockdown_old_r0: .5,
+    lockdown_isolation: .9,
+    lockdown_start: 30,
+    lockdown_end: 70,
+    days: 100
+  } 
+}
+
+function getParams() {
+  let w = new URLSearchParams(window.location.search)
+
+  default_params = defaultParams()
+  params = {}
+  for (let [key, value] of Object.entries(default_params)) {
+     params[key] = paramOrDefault(w, key, value)
+  } 
+  return params
+
+}
+
+params = getParams() 
+INFECTED_DAYS = 5
+function makeWindowParams() {
+  original_params = defaultParams()
+  parts = []
+  for (let [key, value] of Object.entries(params)) {
+     if (value != original_params[key]) {
+      parts.push(key + "=" + value)
+     }
+  } 
+  return parts.join("&")  
+}
+
+function copyGraphLink() {
+  var copyText = document.getElementById("myInput");
+  /* Select the text field */
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+  /* Copy the text inside the text field */
+  document.execCommand("copy");
+}
+
+function initialInfected(num_infected, infected_days) {
+  infection = []
+  for (var i = 0; i < infected_days; i++) {
+    infection.push(0)
+  }
+  infection[0] = num_infected
+  return infection
+}
+
+function initialState() {
+   groups = []
+   old_fraction = params.old_percentage / 100
+   groups.push({
+      population: params.pop * (1 - old_fraction)
+      infected: initialInfected(1000 * (1 - old_fraction), INFECTED_DAYS),
+      ever_sick: 1,
+      r0: params.r0,
+      cross_infection: 1,
+      lockdown_cross_infection: 1 - params.lockdown_isolation,
+      lockdown_r0: params.lockdown_young_r0
+   })
+   groups.push({
+      population: params.pop * old_fraction,
+      infected: initialInfected(1000 * old_fraction, INFECTED_DAYS),
+      ever_sick: 1,
+      r0: params.r0,
+      cross_infection: 1,
+      lockdown_cross_infection: 1 - params.lockdown_isolation,
+      lockdown_r0: params.lockdown_old_r0
+   })
+
+   return groups
+
+
+}
+
+function expectedNewInfections(state, new_infections) {
+  if(state.population == 0) {
+    return 0;
+  }
+  prob_single_not = 1 - (1 / state.population)
+  prob_total_not = Math.pow(prob_single_not, new_infections)
+  prob_selected = 1 - prob_total_not
+  return (state.population - state.ever_sick) * prob_selected 
+}
+
+function groupR0(group, day, group_index) {
+  lockdown_started = day >= params.lockdown_start && params.lockdown_start != -1
+  lockdown_ended = day > params.lockdown_end && params.lockdown_end != -1
+  in_lockdown = lockdown_started && !lockdown_ended
+  if (in_lockdown) {
+    return {
+      current_r0: group.lockdown_r0,
+      cross_infection: group.lockdown_cross_infection
+    }
+  } else {
+    return {
+      current_r0: group.r0,
+      cross_infection: group.cross_infection
+    }
+  }
+}
+
+function AddInfections(existing_infections, new_infections) {
+  added_infections = []
+  added_infections.push(new_infections)
+  for (var i = 0; i < existing_infections.length - 1; i++) {
+    added_infections.push(existing_infections[i])
+  }
+  return added_infections
+}
+
+function AllInfected(group_infections) {
+  total_infected = 0
+  for (var i in group_infections) {
+    total_infected += group_infections[i]
+  }
+  return total_infected
+}
+
+function advanceState(current_groups, day) {
+   new_groups = []
+   global_infections = 0
+   total_population = 0
+   for (i = 0; i < current_groups.length; i++) {
+    total_population += current_groups[i].population
+    group_params = groupR0(current_groups[i], day, i)
+    global_infections += AllInfected(current_groups[i].infected) * group_params.current_r0 * group_params.cross_infection / INFECTED_DAYS
+   }
+
+   for (i = 0; i < current_groups.length; i++) {
+    group = current_groups[i]
+    group_params = groupR0(group, day, i)
+
+    group_infections = AllInfected(current_groups[i].infected) * group_params.current_r0 * (1.0 - group_params.cross_infection) / INFECTED_DAYS
+    group_global_infections = global_infections * group.population / total_population
+    actual_infections = expectedNewInfections(group, group_infections + group_global_infections)
+    new_groups.push({
+      population: group.population,
+      infected: AddInfections(group.infected, actual_infections),
+      ever_sick: group.ever_sick + actual_infections,
+      r0: group.r0,
+      lockdown_r0: group.lockdown_r0,
+      cross_infection: group.cross_infection,
+      lockdown_cross_infection: group.lockdown_cross_infection
+    })
+   }
+   return new_groups
+}
+
+function getTotalParams(current_groups, day) {
+  total_infected = 0
+  total_population = 0
+  total_sick = 0
+  dead = current_groups[0].infected[0] * params.young_death / 100 + current_groups[1].infected[0] * params.old_death / 100
+  total_dead = current_groups[0].ever_sick * params.young_death / 100 + current_groups[1].ever_sick * params.old_death / 100
+
+  for (i = 0; i < current_groups.length; i++) {
+    total_infected += current_groups[i].ever_sick
+    total_population += current_groups[i].population
+    total_sick += current_groups[i].infected[0]
+  }
+  return {
+    day: day,
+    ever_sick: total_infected,
+    population: total_population,
+    infected: total_sick,
+    dead: dead,
+    total_dead: total_dead,
+  }
+}
+
+
+function updateGraph() {
+  lockdown_groups = initialState();
+  lockdown_data = []
+  lockdown_data.push(getTotalParams(groups, 0))
+  for(day = 1; day <= params.days; day++) {
+    groups = advanceState(groups, day);
+    lockdown_data.push(getTotalParams(groups, day));
+  }
+
+  chart = drawChart(lockdown_data);
+  var copyText = document.getElementById("myInput");
+  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
+  var graphLink = document.getElementById("graphImage");
+  graphLink.href = chart.getImageURI()
+}
+
+function updateAttribute(attribute, value, update_graph=true) {
+  // adjust the text on the range slider
+  d3.select("#" + attribute + "-value").text(value);
+  d3.select("#" + attribute + "-value").property("value", value);
+  d3.select("#" + attribute).property("value", value);
+  if(update_graph == true) {
+     updateGraph();
+  }
+}
+
+function initializeGraph() {
+  for (let [key, value] of Object.entries(params)) {
+    d3.select("#" + key).on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+
+    d3.select("#" + key + "-value").on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+    updateAttribute(key, value, false)
+  }
+  updateAttribute("r0", params.r0)
+}
+google.charts.load('current', {packages: ['corechart', 'line']}).then(initializeGraph);
+</script>
