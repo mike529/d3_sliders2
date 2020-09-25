@@ -152,10 +152,10 @@ function defaultParams() {
     r0: 2.0,
     pop: 1e8,
     old_percentage: 10,
-    young_death: .5,
-    old_death: 5,
+    young_death: .1,
+    old_death: 10,
     lockdown_young_r0: 2.0,
-    lockdown_old_r0: .5,
+    lockdown_old_r0: .1,
     lockdown_isolation: .9,
     lockdown_start: 30,
     lockdown_end: 70,
@@ -211,7 +211,7 @@ function initialState() {
    groups = []
    old_fraction = params.old_percentage / 100
    groups.push({
-      population: params.pop * (1 - old_fraction)
+      population: params.pop * (1 - old_fraction),
       infected: initialInfected(1000 * (1 - old_fraction), INFECTED_DAYS),
       ever_sick: 1,
       r0: params.r0,
