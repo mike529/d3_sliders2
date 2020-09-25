@@ -15,16 +15,6 @@
  </td>
 </tr>
 <tr>
- <td>Population Parameters:</td>
-</tr>
-<tr>
- <td>
-  <label for="pop">Population:</label>
-  <input type="range" min="10000" max="10000000" id="pop" step=10000>
-  <input type="number" id="pop-value" size="10">
- </td>
-</tr>
-<tr>
  <td>Graph Parameters:</td>
 </tr>
 <tr>
@@ -84,7 +74,7 @@ function drawChart(simulation_data) {
   }
 
   var options = {
-    title: 'Infections over time',
+    title: params.title,
     width: 900,
     height: 500,
     // Gives each series an axis that matches the vAxes number below.
@@ -132,7 +122,8 @@ function defaultParams() {
     pop: 1e8,
     infected_max: 0,
     total_infected_max: 0,
-    days: 100
+    days: 100,
+    title: "Infections Over Time"
   } 
 }
 
