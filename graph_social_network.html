@@ -14,10 +14,15 @@
     <input type="number" id="r0-value">
  </td>
  <td>
-    <label for="lockdown_r0">Population Spread (R0):</label>
+    <label for="lockdown_r0">Lockdown Population Spread (R0):</label>
     <input type="range" min="0" max="3.0" id="lockdown_r0" step=.01>
     <input type="number" id="lockdown_r0-value">
  </td>
+ <td>
+  <label for="group_skew">Heterogenity:</label>
+  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
+  <input type="number" id="group_skew-value">
+</td>
  </tr>
  <tr>
    <td>Lockdown Parameters:</td>
@@ -38,11 +43,6 @@
  <td>Population Parameters:</td>
 </tr>
 <tr>
-<td>
-  <label for="group_skew">Group Skew (Alpha):</label>
-  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
-  <input type="number" id="group_skew-value">
-</td>
 </tr>
 <tr>
  <td>Graph Parameters:</td>

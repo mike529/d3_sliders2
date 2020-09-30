@@ -18,6 +18,11 @@
     <input type="range" min="0" max="1.0" id="cross_infection" step=.0001>
     <input type="number" id="cross_infection-value">
  </td>
+ <td>
+  <label for="group_skew">Heterogenity:</label>
+  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
+  <input type="number" id="group_skew-value">
+</td>
  </tr>
  <tr>
    <td>Lockdown Transmission Parameters:</td>
@@ -48,16 +53,6 @@
     <input type="range" min="0" max="100" id="lockdown_end">
     <input type="number" id="lockdown_end-value">
  </td>
-</tr>
-<tr>
- <td>Population Parameters:</td>
-</tr>
-<tr>
-<td>
-  <label for="group_skew">Group Skew (Alpha):</label>
-  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
-  <input type="number" id="group_skew-value">
-</td>
 </tr>
 <tr>
  <td>Graph Parameters:</td>
