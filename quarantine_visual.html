@@ -54,6 +54,15 @@
     <input type="title" id="title-value">
  </td>
  <td>
+    <label for="stop_day">Stop at Day:</label>
+    <input type="number" id="stop_day-value">
+ </td>
+<td>
+    <label for="animation_speed">Animation Speed (Days / s):</label>
+    <input type="range" min="0" max="60" id="animation_speed">
+    <input type="number" id="animation_speed-value">
+ </td>
+ <td>
    <a href="" id="myInput">Permalink</a>
  </td>
 </tr>
@@ -62,6 +71,7 @@
     <button onclick="resetSimulation()">Restart</button>
     <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
+    <button onclick="downloadGIF()">Download GIF</button>    
   </td>
 </tr>
 </table>
@@ -71,6 +81,7 @@
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="whammy.js"></script>
 <script>
 
 
@@ -113,6 +124,9 @@ function drawCanvas(data, day) {
   var rect_height = 10
   var rect_width = 10
   ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillRect(0,0, c.width, c.height)
+
 
   infected = 0
   ever_sick = 0
@@ -147,7 +161,7 @@ function drawCanvas(data, day) {
     var x = group_index % ROW_WIDTH
     var y = Math.floor(group_index  / ROW_WIDTH)
     var group = data[group_index]
-    fraction_ever_infected = group.ever_sick * 256 / group.population
+    fraction_ever_infected = Math.sqrt(group.ever_sick / group.population) * 256
     ctx.fillStyle = `rgb(
       ${fraction_ever_infected},
       ${255 - fraction_ever_infected}, 
@@ -171,6 +185,7 @@ function drawCanvas(data, day) {
       ctx.stroke();
     }
   }
+  encoder.add(c)
 }
 
 
@@ -200,7 +215,9 @@ function defaultParams() {
     days: 100,
     infected_days: 7,
     quarantine_neighbors: false,
-    title: "Initial State"
+    title: "Initial State",
+    stop_day: 200,
+    animation_speed: 5,
   } 
 }
 
@@ -442,6 +459,16 @@ function getTotalParams(current_groups, day) {
 }
 
 timeout_id = null
+
+var encoder = new Whammy.Video(15); 
+
+function handleDataAvailable(event) {
+  if (event.data.size > 0) {
+    recordedChunks.push(event.data);
+  }
+}
+
+
 function stopAnimation() {
   if (timeout_id != null) {
     window.clearInterval(timeout_id)
@@ -451,7 +478,7 @@ function stopAnimation() {
 
 function startAnimation() {
   if (timeout_id == null) {
-    timeout_id = window.setInterval(advanceDayInternal, 200)
+    timeout_id = window.setInterval(advanceDayInternal, 1000 / params.animation_speed)
   } else {
     stopAnimation()
   }
@@ -460,6 +487,7 @@ function startAnimation() {
 function resetSimulation() {
   resetRand()
   stopAnimation()
+  encoder = new Whammy.Video(params.animation_speed)
   groups = initialState()
   day = 1
   drawCanvas(groups, day)
@@ -478,11 +506,23 @@ function advanceDayInternal() {
   day += 1
   groups = advanceState(groups, day)
   drawCanvas(groups, day)
+  if (day >= params.stop_day) {
+    stopAnimation()
+  }
 }
 
 function resetRandom() {
   params.random_seed = new Date().getTime()
   resetRand()
+}
+
+function downloadGIF() {
+  stopAnimation()
+  encoder.compile(false, function(output){
+    url = URL.createObjectURL(output)
+    window.open(url)}
+  )
+  
 }
 
 function updateAttribute(attribute, value, update_graph=true) {
