@@ -55,14 +55,17 @@
     <input type="title" id="title-value">
  </td>
  <td>
-    <label for="stop_day">Stop at Day:</label>
+    <label for="stop_day">Transition at Day:</label>
     <input type="number" id="stop_day-value">
  </td>
+</td>
+
 <td>
-    <label for="animation_speed">Animation Speed (Days / s):</label>
-    <input type="range" min="0" max="60" id="animation_speed">
-    <input type="number" id="animation_speed-value">
- </td>
+  <label for="transition">Transition to:</label>
+  <select name="transition_options" id="transition_options" onchange="params.transition=this.options[this.selectedIndex].value; updateLink()">
+  </select>  
+</td>
+
 </tr>
 <tr>
   <td>
@@ -77,17 +80,25 @@
     <button onclick="resetSimulation()">Restart</button>
     <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
-    <button onclick="downloadGIF()">Download GIF</button>    
+    <button onclick="downloadGIF()">Download GIF</button>   
+    <td>
+      <label for="animation_speed">Animation Speed (Days / s):</label>
+      <input type="range" min="0" max="60" id="animation_speed">
+      <input type="number" id="animation_speed-value">
+    </td> 
   </td>
 </tr>
 <tr>
  <td>
    <a href="" id="myInput">Permalink</a>
   </td>
+ <td>
+   <a href="" id="myAutoplayInput">Autoplay Permalink</a>
+  </td>
   </tr>
 </table>
 
-<canvas id="myCanvas" width="500" height="300" style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="myCanvas" width="1000" height="600" style="border:1px solid #d3d3d3;"></canvas>
 
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -106,8 +117,10 @@ function seeded_random(a) {
 }
 
 
-ROW_WIDTH = 50
+ROW_WIDTH = 100
 GRAPH_OFFSET = 100
+GROUPS = 5000
+
 
 function getNeighbors(index, num_groups) {
   var x = index % ROW_WIDTH
@@ -201,7 +214,7 @@ function drawCanvas(data, day) {
 
 
 function paramOrDefault(w, param, default_val) {
-  if (param == "title" || param == "quarantine_neighbors") {
+  if (param == "title" || param == "quarantine_neighbors" || param == "transition") {
     return w.get(param) || default_val
   }
   let val = parseFloat(w.get(param))
@@ -220,7 +233,6 @@ function defaultParams() {
     neighbor_infections: 1000,
     global_infections: 10,
     pop: 1e6,
-    groups: 1e3,
     quarantine_percentage: 1,
     quarantine_leave_percentage: .1,
     days: 100,
@@ -229,6 +241,7 @@ function defaultParams() {
     title: "Initial State",
     stop_day: 200,
     animation_speed: 5,
+    transition: ""
   } 
 }
 
@@ -249,11 +262,13 @@ function resetRand() {
 
 params = getParams()
 saved_params = JSON.parse(new URLSearchParams(window.location.search).get("saved_params")) || {}
+autoplay = new URLSearchParams(window.location.search).get("autoplay") || false
+
 resetRand()
 groups = []
 day = 1
 
-function makeWindowParams() {
+function makeWindowParams(autoplay) {
   original_params = defaultParams()
   parts = []
   for (let [key, value] of Object.entries(params)) {
@@ -261,18 +276,11 @@ function makeWindowParams() {
       parts.push(key + "=" + value)
      }
   }
+  if (autoplay) {
+    parts.push("autoplay=1")
+  }
   parts.push("saved_params" + "=" + JSON.stringify(saved_params)) 
   return parts.join("&")  
-}
-
-function copyGraphLink() {
-  var copyText = document.getElementById("myInput");
-  /* Select the text field */
-  copyText.select();
-  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
-
-  /* Copy the text inside the text field */
-  document.execCommand("copy");
 }
 
 function initialInfected(num_infected, infected_days) {
@@ -287,13 +295,13 @@ function initialInfected(num_infected, infected_days) {
 function initialState() {
    groups = []
    total_r0 = 0.0
-   expected_total = params.groups
+   expected_total = GROUPS
    initial_infected_groups = {}
    for (i=0; i < 10; i++) {
-    initial_infected_groups[getRandomInt(0, params.groups)] = true
+    initial_infected_groups[getRandomInt(0, GROUPS)] = true
    }
 
-   for(i=0 ; i < params.groups; i++) {
+   for(i=0 ; i < GROUPS; i++) {
     group_r0 =  Math.pow(seededRandom(), params.group_skew)
     total_r0 += group_r0
     infected = 0
@@ -309,8 +317,8 @@ function initialState() {
       in_quarantine: false
     })}
 
-    for (i=0; i < params.groups; i++) {
-      neighbors = getNeighbors(i, params.groups)
+    for (i=0; i < GROUPS; i++) {
+      neighbors = getNeighbors(i, GROUPS)
       for (neighbor_index in neighbors)  {
         groups[i].neighbors[neighbors[neighbor_index]] = true
       }
@@ -520,7 +528,11 @@ function advanceDayInternal() {
   groups = advanceState(groups, day)
   drawCanvas(groups, day)
   if (day >= params.stop_day) {
-    stopAnimation()
+    if (params.transition == '') {
+      stopAnimation()
+    } else {
+      restoreParams(params.transition)
+    }
   }
 }
 
@@ -548,11 +560,13 @@ function saveParams() {
 
 function restoreParams(title) {
   old_seed = params["random_seed"]
+  old_speed = params["animation_speed"]
   if (title === "") {
     return
   }
   params = saved_params[title]
   params["random_seed"] = old_seed
+  params["animation_speed"] = old_speed
   initializeParams()
 }
 
@@ -561,31 +575,50 @@ function clearSavedParams() {
   initializeParams()
 }
 
+function updateLink() {
+  var copyText = document.getElementById("myInput");
+  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams(false)
+  var autoplayCopyText = document.getElementById("myAutoplayInput");
+  autoplayCopyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams(true)
+   
+}
+
 function updateAttribute(attribute, value, update_graph=true) {
   // adjust the text on the range slider
   d3.select("#" + attribute + "-value").text(value);
   d3.select("#" + attribute + "-value").property("value", value);
   d3.select("#" + attribute).property("value", value);
-  var copyText = document.getElementById("myInput");
-  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
+  updateLink()
 }
 
 
 function initializeParams() {
-  select_str = '<option hidden value=""></option>'
+  param_select_str = '<option hidden value=""></option>'
+  transition_select_str = '<option value="">Stop</option>'
   param_index = 1
   found_param_index = 0
+  found_transition_index = 0
   for (key in saved_params) {
-    select_str += `<option value="${key}">${key}</option>`
+    param_select_str += `<option value="${key}">${key}</option>`
+    transition_select_str += `<option value="${key}">${key}</option>`
     if (key == params.title) {
       found_param_index = param_index
     }
+    if (key == params.transition) {
+      found_transition_index = param_index
+    }
     param_index++
   }
-  document.getElementById("saved_param_options").innerHTML = select_str;
+  document.getElementById("saved_param_options").innerHTML = param_select_str;
   document.getElementById("saved_param_options").options.selectedIndex = found_param_index
 
+  document.getElementById("transition_options").innerHTML = transition_select_str
+  document.getElementById("transition_options").options.selectedIndex = found_transition_index
+
   for (let [key, value] of Object.entries(params)) {
+    if (key == 'transition') {
+      continue;
+    }
     d3.select("#" + key).on("input", function() {
       params[key] = +this.value;
       updateAttribute(key, +this.value);
@@ -598,7 +631,7 @@ function initializeParams() {
     updateAttribute(key, value, false)
   }
 
-  
+
   d3.select("#" +  "quarantine_neighbors-value").on("input", function() {
     params["quarantine_neighbors"] = +this.checked;
     updateAttribute("quarantine_neighbors", +this.value);
@@ -618,4 +651,7 @@ function initializeGraph() {
   resetSimulation()
 }
 initializeGraph()
+if (autoplay) {
+  startAnimation()
+}
 </script>
