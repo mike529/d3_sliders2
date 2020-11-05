@@ -259,7 +259,7 @@ function getParams() {
 function resetRand() {
   seededRandom = seeded_random(params.random_seed)
 }
-
+original_params = null
 params = getParams()
 saved_params = JSON.parse(new URLSearchParams(window.location.search).get("saved_params")) || {}
 autoplay = new URLSearchParams(window.location.search).get("autoplay") || false
@@ -269,7 +269,7 @@ groups = []
 day = 1
 
 function makeWindowParams(autoplay) {
-  original_params = defaultParams()
+  var original_params = defaultParams()
   parts = []
   for (let [key, value] of Object.entries(params)) {
      if (value != original_params[key]) {
@@ -508,6 +508,11 @@ function startAnimation() {
 function resetSimulation() {
   resetRand()
   stopAnimation()
+  if (original_params != null) {
+    params = original_params
+    initializeParams()
+    original_params = null
+  }
   encoder = new Whammy.Video(params.animation_speed)
   groups = initialState()
   day = 1
@@ -531,6 +536,9 @@ function advanceDayInternal() {
     if (params.transition == '') {
       stopAnimation()
     } else {
+      if (original_params == null) {
+        original_params = params
+      }
       restoreParams(params.transition)
     }
   }
@@ -561,12 +569,16 @@ function saveParams() {
 function restoreParams(title) {
   old_seed = params["random_seed"]
   old_speed = params["animation_speed"]
+  old_group_size = params["pop"]
+  old_group_skew = params["group_skew"]
   if (title === "") {
     return
   }
   params = saved_params[title]
   params["random_seed"] = old_seed
   params["animation_speed"] = old_speed
+  params["pop"] = old_group_size
+  params["group_skew"] = old_group_skew
   initializeParams()
 }
 
