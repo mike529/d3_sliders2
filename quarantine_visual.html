@@ -5,9 +5,6 @@
 
 <table style="width:100%">
 <tr>
- <td>Transmission Parameters:</td>
-</tr>
-<tr>
  <td>
     <label for="r0">Population Spread (R0):</label>
     <input type="range" min="0" max="3.0" id="r0" step=.01>
@@ -25,14 +22,18 @@
  </td>
 </tr>
 <tr>
- <td>Other Parameters:</td>
-</tr>
-<tr>
+ <td>
+  <label for="pop">Group Size:</label>
+  <input type="range" min="0" max="1e7" id="pop">
+  <input type="number" id="pop-value">
+</td>
  <td>
   <label for="group_skew">Heterogenity:</label>
   <input type="range" min="0" max="10.0" id="group_skew" step=.01>
   <input type="number" id="group_skew-value">
 </td>
+</tr>
+<tr>
  <td>
     <label for="quarantine_percentage">Quarantine Percentage:</label>
     <input type="range" min="0" max="100" id="quarantine_percentage">
@@ -62,9 +63,14 @@
     <input type="range" min="0" max="60" id="animation_speed">
     <input type="number" id="animation_speed-value">
  </td>
- <td>
-   <a href="" id="myInput">Permalink</a>
- </td>
+</tr>
+<tr>
+  <td>
+  <button onclick="saveParams()">Save Parameters</button>
+  <label for="saved_params">Restore Params:</label>
+    <select name="saved_param_options" id="saved_param_options" onchange="restoreParams(this.options[this.selectedIndex].value)">
+    </select>  
+  </td>
 </tr>
 <tr>
   <td>
@@ -74,6 +80,11 @@
     <button onclick="downloadGIF()">Download GIF</button>    
   </td>
 </tr>
+<tr>
+ <td>
+   <a href="" id="myInput">Permalink</a>
+  </td>
+  </tr>
 </table>
 
 <canvas id="myCanvas" width="500" height="300" style="border:1px solid #d3d3d3;"></canvas>
@@ -237,6 +248,7 @@ function resetRand() {
 }
 
 params = getParams()
+saved_params = JSON.parse(new URLSearchParams(window.location.search).get("saved_params")) || {}
 resetRand()
 groups = []
 day = 1
@@ -248,7 +260,8 @@ function makeWindowParams() {
      if (value != original_params[key]) {
       parts.push(key + "=" + value)
      }
-  } 
+  }
+  parts.push("saved_params" + "=" + JSON.stringify(saved_params)) 
   return parts.join("&")  
 }
 
@@ -521,8 +534,31 @@ function downloadGIF() {
   encoder.compile(false, function(output){
     url = URL.createObjectURL(output)
     window.open(url)}
-  )
-  
+  ) 
+}
+
+function saveParams() {
+  new_params = {}
+  for (let [key, value] of Object.entries(params)) {
+    new_params[key] = value
+  }
+  saved_params[params.title] = new_params
+  initializeParams()
+}
+
+function restoreParams(title) {
+  old_seed = params["random_seed"]
+  if (title === "") {
+    return
+  }
+  params = saved_params[title]
+  params["random_seed"] = old_seed
+  initializeParams()
+}
+
+function clearSavedParams() {
+  saved_params = {}
+  initializeParams()
 }
 
 function updateAttribute(attribute, value, update_graph=true) {
@@ -534,7 +570,21 @@ function updateAttribute(attribute, value, update_graph=true) {
   copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
 }
 
-function initializeGraph() {
+
+function initializeParams() {
+  select_str = '<option hidden value=""></option>'
+  param_index = 1
+  found_param_index = 0
+  for (key in saved_params) {
+    select_str += `<option value="${key}">${key}</option>`
+    if (key == params.title) {
+      found_param_index = param_index
+    }
+    param_index++
+  }
+  document.getElementById("saved_param_options").innerHTML = select_str;
+  document.getElementById("saved_param_options").options.selectedIndex = found_param_index
+
   for (let [key, value] of Object.entries(params)) {
     d3.select("#" + key).on("input", function() {
       params[key] = +this.value;
@@ -547,14 +597,24 @@ function initializeGraph() {
     });
     updateAttribute(key, value, false)
   }
+
+  
   d3.select("#" +  "quarantine_neighbors-value").on("input", function() {
     params["quarantine_neighbors"] = +this.checked;
     updateAttribute("quarantine_neighbors", +this.value);
+    d3.select("#quarantine_neighbors-value").property('checked', +this.checked);
   });
+  d3.select("#quarantine_neighbors-value").property('checked', params["quarantine_neighbors"]);
+
   d3.select("#" +  "title-value").on("input", function() {
     params["title"] = this.value;
     updateAttribute("title", this.value);
-  });
+  });  
+  d3.select('#title-value').property('value', this.value)
+
+}
+function initializeGraph() {
+  initializeParams()
   resetSimulation()
 }
 initializeGraph()
