@@ -2,103 +2,88 @@
 <meta charset="utf-8">
 
 <title>Dynamic Population / Spreader Model</title>
-
+<h1> Global Parameters </h1>
+<table style="width:100%">
+<tr>
+ <td>
+    <label for="pop">Group Size:</label>
+    <input type="number" id="pop" oninput="updateAndInitializeFromParams('pop', +this.value, false)">
+ </td>
+ <td>
+  <label for="group_skew">Heterogenity:</label>
+  <input type="number" id="group_skew" oninput="updateAndInitializeFromParams('group_skew', +this.value, false)">
+ </td> 
+</tr>
+<tr>
+<td>
+  <label for="title">State Name:</label>
+  <select id="title" onchange="updateAndInitializeFromParams('title', this.options[this.selectedIndex].value, false)">  
+</td>
+<td>
+  <button onclick="deleteState()">Delete State</button>
+  <button onclick="addState()">Add State</button>
+</td>
+</tr>
+</table>
+<h1>State Parameters</h1>
 <table style="width:100%">
 <tr>
  <td>
     <label for="r0">Population Spread (R0):</label>
-    <input type="range" min="0" max="3.0" id="r0" step=.01>
-    <input type="number" id="r0-value">
+    <input type="number" id="r0" oninput="updateAndInitializeFromParams('r0', +this.value, true)">
  </td>
 <td>
     <label for="neighbor_infections">Neighbor Interactions Per Million</label>
-    <input type="range" min="0" max="100000" id="neighbor_infections">
-    <input type="number" id="neighbor_infections-value">
+    <input type="number" id="neighbor_infections" oninput="updateAndInitializeFromParams('neighbor_infections', +this.value, true)">
  </td>
  <td>
     <label for="global_infections">Global Interactions Per Million</label>
-    <input type="range" min="0" max="1000" id="global_infections">
-    <input type="number" id="global_infections-value">
+    <input type="number" id="global_infections" oninput="updateAndInitializeFromParams('global_infections', +this.value, true)">
  </td>
-</tr>
-<tr>
- <td>
-  <label for="pop">Group Size:</label>
-  <input type="range" min="0" max="1e7" id="pop">
-  <input type="number" id="pop-value">
-</td>
- <td>
-  <label for="group_skew">Heterogenity:</label>
-  <input type="range" min="0" max="10.0" id="group_skew" step=.01>
-  <input type="number" id="group_skew-value">
-</td>
 </tr>
 <tr>
  <td>
     <label for="quarantine_percentage">Quarantine Percentage:</label>
-    <input type="range" min="0" max="100" id="quarantine_percentage">
-    <input type="number" id="quarantine_percentage-value">
+    <input type="number" id="quarantine_percentage" oninput="updateAndInitializeFromParams('quarantine_percentage', +this.value, true)">
  </td>
-  <td>
+
+ <td>
     <label for="quarantine_leave_percentage">Quarantine Leave Percentage:</label>
-    <input type="range" min="0" max="100" id="quarantine_leave_percentage">
-    <input type="number" id="quarantine_leave_percentage-value">
+    <input type="number" id="quarantine_leave_percentage" oninput="updateAndInitializeFromParams('quarantine_leave_percentage', +this.value, true)">
  </td>
    <td>
     <label for="quarantine_neighbors">Quarantine Neighbors:</label>
-    <input type="checkbox" id="quarantine_neighbors-value">
+    <input type="checkbox" id="quarantine_neighbors" oninput="updateAndInitializeFromParams('quarantine_neighbors', this.checked, true)">
  </td> 
 </tr>
-<tr>
- <td>
-    <label for="title">Display Title:</label>
-    <input type="title" id="title-value">
- </td>
- <td>
-    <label for="stop_day">Transition at Day:</label>
-    <input type="number" id="stop_day-value">
- </td>
-</td>
+</table>
+<h1> Animation Transitions </h1>
+<div id="transitions"></div>
 
-<td>
-  <label for="transition">Transition to:</label>
-  <select name="transition_options" id="transition_options" onchange="params.transition=this.options[this.selectedIndex].value; updateLink()">
-  </select>  
-</td>
-
-</tr>
-<tr>
-  <td>
-  <button onclick="saveParams()">Save Parameters</button>
-  <label for="saved_params">Restore Params:</label>
-    <select name="saved_param_options" id="saved_param_options" onchange="restoreParams(this.options[this.selectedIndex].value)">
-    </select>  
-  </td>
-</tr>
+<table style="width:100%">
 <tr>
   <td>
     <button onclick="resetSimulation()">Restart</button>
     <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
+    <button onclick="drawChart(daily_data)">Update Graph</button>    
     <button onclick="downloadGIF()">Download GIF</button>   
+    <label for="autoplay">Autoplay:</label>
+    <input type="checkbox" id="autoplay" oninput="updateAndInitializeFromParams('autoplay', this.checked, false)">
+    <a href="" id="myInput">Permalink</a>
     <td>
       <label for="animation_speed">Animation Speed (Days / s):</label>
-      <input type="range" min="0" max="60" id="animation_speed">
-      <input type="number" id="animation_speed-value">
+      <input type="number" id="animation_speed"  oninput="updateAndInitializeFromParams('animation_speed', +this.value, false)">
     </td> 
   </td>
 </tr>
-<tr>
- <td>
-   <a href="" id="myInput">Permalink</a>
-  </td>
- <td>
-   <a href="" id="myAutoplayInput">Autoplay Permalink</a>
-  </td>
-  </tr>
 </table>
 
-<canvas id="myCanvas" width="1000" height="600" style="border:1px solid #d3d3d3;"></canvas>
+<div class="container" style="display: flex">;
+  <canvas id="myCanvas" width="750" height="600" style="border:1px solid #d3d3d3;"></canvas>
+  <div id="curve_chart" style="flex-grow: 1;"></div>
+</div>
+
 
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -117,9 +102,9 @@ function seeded_random(a) {
 }
 
 
-ROW_WIDTH = 100
+ROW_WIDTH = 75
 GRAPH_OFFSET = 100
-GROUPS = 5000
+GROUPS = 3750
 
 
 function getNeighbors(index, num_groups) {
@@ -141,8 +126,74 @@ function getNeighbors(index, num_groups) {
   return neighbors
 }
 
+function getTotalParams(current_groups, day, state) {
+  var total_infected = 0
+  var total_population = 0
+  var total_sick = 0
+  for (i = 0; i < current_groups.length; i++) {
+    total_infected += current_groups[i].ever_sick
+    total_population += current_groups[i].population
+    total_sick += AllInfected(current_groups[i].infected)
+  }
+  return {
+    day: day,
+    state: state,
+    ever_sick: total_infected,
+    population: total_population,
+    infected: total_sick
+  }
+}
 
-function drawCanvas(data, day) {
+function drawChart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Percent Infected");
+  data.addColumn('number', "Infected Per Million");
+  prev_state = null
+  for (var i in simulation_data) {
+    annotation = null
+    simulation_point = simulation_data[i]
+    if (prev_state != null && simulation_point.state != prev_state) {
+      annotation = simulation_point.state
+    }
+    prev_state = simulation_point.state
+    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
+  }
+
+  var options = {
+    title: params.title,
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Percentage Infected'},
+      1: {title: 'Infected Per Million'}
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+  if (params.total_infected_max != 0) {
+    options.vAxes[0].maxValue = params.total_infected_max
+  }
+  if (params.infected_max != 0) {
+    options.vAxes[1].maxValue = params.infected_max
+  }
+
+  var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+
+function drawCanvas(data, day, day_params) {
   var c = document.getElementById("myCanvas");
   var ctx = c.getContext("2d");
   var rect_height = 10
@@ -174,7 +225,7 @@ function drawCanvas(data, day) {
   ctx.font = '15px serif';
 
 
-  ctx.fillText('State: ' + params.title, 0, 15)
+  ctx.fillText('State: ' + day_params.title, 0, 15)
   ctx.fillText('Day: ' + day, 0, 30)
   ctx.fillText('Currently Infected per Million: ' + (infected * 1e6 / population).toFixed(0), 0, 45);
   ctx.fillText('Percentage Ever Infected: ' + (ever_sick * 100 / population).toFixed(2) + '%', 0, 60)
@@ -213,75 +264,53 @@ function drawCanvas(data, day) {
 }
 
 
-function paramOrDefault(w, param, default_val) {
-  if (param == "title" || param == "quarantine_neighbors" || param == "transition") {
-    return w.get(param) || default_val
-  }
-  let val = parseFloat(w.get(param))
-  if(val == 0) {
-    return 0
-  }
-  return val || default_val
-  
+function defaultInitialState() {
+  return  {
+      'r0': 2,
+      'neighbor_infections': 9000,
+      'global_infections': 1000,
+      'quarantine_percentage': 100,
+      'quarantine_leave_percentage': .1,
+      'quarantine_neighbors': false
+    }
 }
-  
+
+
 function defaultParams() {
-  return {
-    random_seed: new Date().getTime(),
-    r0: 1.0,
-    group_skew: 2.0,
-    neighbor_infections: 1000,
-    global_infections: 10,
-    pop: 1e6,
-    quarantine_percentage: 1,
-    quarantine_leave_percentage: .1,
-    days: 100,
-    infected_days: 7,
-    quarantine_neighbors: false,
-    title: "Initial State",
-    stop_day: 200,
-    animation_speed: 5,
-    transition: ""
-  } 
+  return  {
+    'pop': 1e5,
+    'group_skew': 2,
+    'infected_days': 7,
+    'title': 'Initial',
+    'animation_speed': 5,
+    'autoplay': false,
+    'random_seed': new Date().getTime(),
+    'state_params': {
+      'Initial': defaultInitialState(),
+      'Lockdown': {
+        'r0': .5,
+        'neighbor_infections': 9000,
+        'global_infections': 1000,
+        'quarantine_percentage': 100,
+        'quarantine_leave_percentage': .1,
+        'quarantine_neighbors': false
+      }
+    },
+    'transitions': [
+      {'state_name': 'Initial', 'end_day': 365},
+    ]
+  }
 }
 
-function getParams() {
-  let w = new URLSearchParams(window.location.search)
 
-  default_params = defaultParams()
-  params = {}
-  for (let [key, value] of Object.entries(default_params)) {
-     params[key] = paramOrDefault(w, key, value)
-  } 
-  return params
-}
+
 
 function resetRand() {
   seededRandom = seeded_random(params.random_seed)
 }
-original_params = null
-params = getParams()
-saved_params = JSON.parse(new URLSearchParams(window.location.search).get("saved_params")) || {}
-autoplay = new URLSearchParams(window.location.search).get("autoplay") || false
 
-resetRand()
-groups = []
-day = 1
 
-function makeWindowParams(autoplay) {
-  var original_params = defaultParams()
-  parts = []
-  for (let [key, value] of Object.entries(params)) {
-     if (value != original_params[key]) {
-      parts.push(key + "=" + value)
-     }
-  }
-  if (autoplay) {
-    parts.push("autoplay=1")
-  }
-  parts.push("saved_params" + "=" + JSON.stringify(saved_params)) 
-  return parts.join("&")  
-}
+
 
 function initialInfected(num_infected, infected_days) {
   infection = []
@@ -292,7 +321,7 @@ function initialInfected(num_infected, infected_days) {
   return infection
 }
 
-function initialState() {
+function initialState(current_params) {
    groups = []
    total_r0 = 0.0
    expected_total = GROUPS
@@ -302,15 +331,15 @@ function initialState() {
    }
 
    for(i=0 ; i < GROUPS; i++) {
-    group_r0 =  Math.pow(seededRandom(), params.group_skew)
+    group_r0 =  Math.pow(seededRandom(), current_params.group_skew)
     total_r0 += group_r0
     infected = 0
     if (i in initial_infected_groups) {
       infected = 100
     }
     groups.push({
-      population: params.pop,
-      infected: initialInfected(infected, params.infected_days),
+      population: current_params.pop,
+      infected: initialInfected(infected, current_params.infected_days),
       neighbors: {},
       ever_sick: infected,
       r0: group_r0,
@@ -378,12 +407,12 @@ function AllInfected(group_infections) {
   return total_infected
 }
 
-function inQuarantine(group) {
+function inQuarantine(group, current_params) {
   percentage_infected = AllInfected(group.infected) * 100 / group.population
-  return percentage_infected >= params.quarantine_percentage || (group.in_quarantine && percentage_infected >= params.quarantine_leave_percentage)
+  return percentage_infected >= current_params.quarantine_percentage || (group.in_quarantine && percentage_infected >= current_params.quarantine_leave_percentage)
 }
 
-function advanceState(current_groups, day) {
+function advanceState(current_groups, day, current_params) {
    new_groups = []
    infections_by_group = []
    global_infections = 0
@@ -397,10 +426,10 @@ function advanceState(current_groups, day) {
 
    for (i = 0; i < current_groups.length; i++) {
     var current_group = current_groups[i]
-    group_in_quarantine = inQuarantine(current_group)
+    group_in_quarantine = inQuarantine(current_group, current_params)
     if (group_in_quarantine) {
       in_quarantine[i] = true
-      if (params.quarantine_neighbors) {
+      if (current_params.quarantine_neighbors) {
         for (var neighbor in current_group.neighbors) {
           in_quarantine[neighbor] = true
         }
@@ -414,12 +443,12 @@ function advanceState(current_groups, day) {
       fraction_global = 0
       fraction_neighbor = 0
     } else {
-      fraction_global = params.global_infections / 1e6
-      fraction_neighbor = params.neighbor_infections / 1e6
+      fraction_global = current_params.global_infections / 1e6
+      fraction_neighbor = current_params.neighbor_infections / 1e6
       num_not_in_quarantine += 1
     }
     fraction_local = 1 - (fraction_neighbor + fraction_global)
-    new_infections = current_infected * current_groups[i].r0 * params.r0 / params.infected_days
+    new_infections = current_infected * current_groups[i].r0 * current_params.r0 / current_params.infected_days
     global_infections += new_infections * fraction_global
     infections_by_group[i] += new_infections * fraction_local
     non_quarantine_neighbors = []
@@ -459,26 +488,6 @@ function getRandomInt(min, max) {
 }
 
 
-function getTotalParams(current_groups, day) {
-  total_infected = 0
-  total_population = 0
-  total_sick = 0
-  total_lockdown = 0
-  for (i = 0; i < current_groups.length; i++) {
-    total_infected += current_groups[i].ever_sick
-    total_population += current_groups[i].population
-    total_sick += current_groups[i].infected[0]
-    total_lockdown += current_groups[i].in_quarantine ? 1 : 0
-  }
-  return {
-    day: day,
-    ever_sick: total_infected,
-    population: total_population,
-    infected: total_sick,
-    total_lockdown: total_lockdown,
-  }
-}
-
 timeout_id = null
 
 var encoder = new Whammy.Video(15); 
@@ -494,6 +503,7 @@ function stopAnimation() {
   if (timeout_id != null) {
     window.clearInterval(timeout_id)
     timeout_id = null    
+    drawChart(daily_data)
   }
 }
 
@@ -505,18 +515,56 @@ function startAnimation() {
   }
 }
 
+function getDailyParamState(current_day) {
+  for (var transition_idx in params.transitions) {
+    transition = params.transitions[transition_idx]
+    if (transition.end_day >= current_day) {
+      return transition.state_name
+    }
+  }
+  return null
+}
+
+function getFullParams(transition_state) {
+  new_params = {}
+  for (key in params) {
+    if (key == 'state_params') {
+      used_state = params.state_params[transition_state]
+      for (var state_key in used_state) {
+        new_params[state_key] = used_state[state_key]
+      }
+    } else if (key != 'transitions') {
+      new_params[key] = params[key]
+    }
+  }
+  new_params['title'] = transition_state
+  return new_params
+}
+
+function getParamsForDay() {
+  var transition_state = getDailyParamState(day)
+  if (transition_state == null) {
+    return null
+  }
+  return getFullParams(transition_state)
+
+
+}
+
 function resetSimulation() {
   resetRand()
   stopAnimation()
-  if (original_params != null) {
-    params = original_params
-    initializeParams()
-    original_params = null
-  }
   encoder = new Whammy.Video(params.animation_speed)
-  groups = initialState()
   day = 1
-  drawCanvas(groups, day)
+  var day_params = getParamsForDay()
+  daily_data = []
+  if (day_params == null) {
+    groups = []
+  } else {
+    groups = initialState(params)  
+    daily_data.push(getTotalParams(groups, day, day_params.title))
+  }  
+  drawCanvas(groups, day, day_params)
 }
 
 function advanceDay() {
@@ -524,24 +572,27 @@ function advanceDay() {
   advanceDayInternal()
 }
 
+
+
 function advanceDayInternal() {
+  var current_params = getParamsForDay()
+  if (current_params == null) {
+    stopAnimation()
+    return
+  }
+
   if (day == 1) {
     resetRand()
-    groups = initialState()
+    groups = initialState(current_params)
+    drawChart(daily_data)
+  }
+  groups = advanceState(groups, day, current_params)
+  daily_data.push(getTotalParams(groups, day, current_params.title))
+  drawCanvas(groups, day, current_params)
+  if (day % 10 == 0) {
+    drawChart(daily_data)
   }
   day += 1
-  groups = advanceState(groups, day)
-  drawCanvas(groups, day)
-  if (day >= params.stop_day) {
-    if (params.transition == '') {
-      stopAnimation()
-    } else {
-      if (original_params == null) {
-        original_params = params
-      }
-      restoreParams(params.transition)
-    }
-  }
 }
 
 function resetRandom() {
@@ -557,113 +608,180 @@ function downloadGIF() {
   ) 
 }
 
-function saveParams() {
-  new_params = {}
-  for (let [key, value] of Object.entries(params)) {
-    new_params[key] = value
+
+function setValue(name, value, is_checkbox) {
+  if (is_checkbox) {
+    d3.select("#" + name).property('checked', value);
+  } else {
+    d3.select("#" + name).text(value);
+      d3.select("#" + name).property("value", value);
   }
-  saved_params[params.title] = new_params
-  initializeParams()
 }
 
-function restoreParams(title) {
-  old_seed = params["random_seed"]
-  old_speed = params["animation_speed"]
-  old_group_size = params["pop"]
-  old_group_skew = params["group_skew"]
-  if (title === "") {
-    return
+function updateAndInitializeFromParams(attr, value, is_state_param) {
+  if (is_state_param) {
+    params.state_params[params.title][attr] = value
+  } else {
+    params[attr] = value
   }
-  params = saved_params[title]
-  params["random_seed"] = old_seed
-  params["animation_speed"] = old_speed
-  params["pop"] = old_group_size
-  params["group_skew"] = old_group_skew
-  initializeParams()
+  initializeFromParams();
 }
 
-function clearSavedParams() {
-  saved_params = {}
-  initializeParams()
+function makeSelect(element_id, options, selected_value) {
+  var title_object = document.getElementById(element_id)
+  var option_select_str = ""
+  var found_index = -1
+  var param_index = 0
+  for (option_index in options) {
+    var option = options[option_index]
+    if (option == selected_value) {
+      found_index = param_index
+    }
+    param_index++;
+    option_select_str += `<option value="${option}">${option}</option>`
+  }
+  title_object.innerHTML = option_select_str;
+  title_object.options.selectedIndex = found_index;
 }
 
-function updateLink() {
+function deleteState() {
+  var old_title = params.title
+  delete params.state_params[params.title]
+  remaining_keys = Object.keys(params.state_params)
+  if (remaining_keys.length == 0) {
+    params.state_params["Initial"] = defaultInitialState()
+    remaining_keys = Object.keys(params.state_params)
+  } 
+  params.title = remaining_keys[0]
+  new_transitions = []
+  for (idx in params.transitions) {
+    transition = params.transitions[idx]
+    if (transition.state_name != old_title) {
+      new_transitions.push(transition)
+    }
+  }
+  params.transitions = new_transitions
+  initializeFromParams()
+}
+
+function addState() {
+  var new_state = prompt("Enter new state name")
+  if (new_state != null) {
+    new_params = {}
+    Object.assign(new_params, params.state_params[params.title])
+
+    params.state_params[new_state] = new_params
+    params.title = new_state
+  }
+  initializeFromParams()
+}
+
+function makeTransitionSelect(selected_state, index) {
+  select_label = "<label for='transition_title'>State Name:</label>"
+  options = ""
+  var states = Object.keys(params.state_params)
+  selected_index = -1
+  for (var idx in states) {
+    option = states[idx]
+    state = states[idx]
+    if (state == selected_state) {
+      options +=  `<option value="${option}" selected>${option}</option>`
+    } else {
+      options +=  `<option value="${option}">${option}</option>`
+    }
+  }
+  return `<label>State Name:</label><select onchange="updateTransition('state_name', this.options[this.selectedIndex].value, ${index})">${options}</select>`
+}
+
+function deleteTransition(index) {
+  params.transitions.splice(index, 1)
+  initializeFromParams()
+}
+
+function addTransition(index) {
+  last_transition = {}
+  Object.assign(last_transition, params.transitions[params.transitions.length - 1])
+  params.transitions.push(last_transition)
+  initializeFromParams()
+}
+
+function updateTransition(attr_type, value, index) {
+  params.transitions[index][attr_type] = value
+  initializeFromParams(false)
+}
+
+function makeTransitions() {
+  transition_str = ""
+  for (var idx in params.transitions) {
+    transition = params.transitions[idx] 
+    end_day = transition.end_day
+    select_str = makeTransitionSelect(transition.state_name, idx)
+    input_str = `<label>End Day</label><input type="number" oninput="updateTransition('end_day', +this.value, ${idx})" text=${end_day} value=${end_day}>`
+    button_str = `<button onclick="deleteTransition(${idx})">Remove Transition</button>` 
+    transition_str += `<p>${select_str} ${input_str} ${button_str}</p>`
+  }
+  transition_str += `<p><button onclick="addTransition()">Add Transition</button></p>`
+  elem = document.getElementById("transitions").innerHTML = transition_str
+
+}
+
+function encodeParams() {
+  return btoa(JSON.stringify(params))
+}
+
+function getParamsFromWindow() {
+  let w = new URLSearchParams(window.location.search)
+  param_string = w.get('params')
+  if (param_string == null) {
+    return defaultParams()
+  }
+  return JSON.parse(atob(param_string))
+}
+
+params = getParamsFromWindow()
+
+resetRand()
+groups = []
+daily_data = []
+day = 1
+
+
+function initializeFromParams(make_transitions = true) {
+  setValue("pop", params.pop, false);
+  setValue("group_skew", params.group_skew, false);
+  makeSelect("title", Object.keys(params.state_params), params.title)
+  setValue("animation_speed", params.animation_speed, false)
+  setValue("autoplay", params.autoplay, true)
+
+  state_params = params.state_params[params.title]
+
+  setValue("r0", state_params.r0, false)
+  setValue("neighbor_infections", state_params.neighbor_infections, false)
+  setValue("global_infections", state_params.global_infections, false)
+  setValue("quarantine_percentage", state_params.quarantine_percentage, false)
+  setValue("quarantine_leave_percentage", state_params.quarantine_leave_percentage, false)
+  setValue("quarantine_neighbors", state_params.quarantine_neighbors, true) 
+  if (make_transitions) {
+    makeTransitions()  
+  }
   var copyText = document.getElementById("myInput");
-  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams(false)
-  var autoplayCopyText = document.getElementById("myAutoplayInput");
-  autoplayCopyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams(true)
-   
+  copyText.href =  window.location.href.split('?')[0] + "?params=" + encodeParams() 
 }
 
-function updateAttribute(attribute, value, update_graph=true) {
-  // adjust the text on the range slider
-  d3.select("#" + attribute + "-value").text(value);
-  d3.select("#" + attribute + "-value").property("value", value);
-  d3.select("#" + attribute).property("value", value);
-  updateLink()
-}
-
-
-function initializeParams() {
-  param_select_str = '<option hidden value=""></option>'
-  transition_select_str = '<option value="">Stop</option>'
-  param_index = 1
-  found_param_index = 0
-  found_transition_index = 0
-  for (key in saved_params) {
-    param_select_str += `<option value="${key}">${key}</option>`
-    transition_select_str += `<option value="${key}">${key}</option>`
-    if (key == params.title) {
-      found_param_index = param_index
-    }
-    if (key == params.transition) {
-      found_transition_index = param_index
-    }
-    param_index++
-  }
-  document.getElementById("saved_param_options").innerHTML = param_select_str;
-  document.getElementById("saved_param_options").options.selectedIndex = found_param_index
-
-  document.getElementById("transition_options").innerHTML = transition_select_str
-  document.getElementById("transition_options").options.selectedIndex = found_transition_index
-
-  for (let [key, value] of Object.entries(params)) {
-    if (key == 'transition') {
-      continue;
-    }
-    d3.select("#" + key).on("input", function() {
-      params[key] = +this.value;
-      updateAttribute(key, +this.value);
-    });
-
-    d3.select("#" + key + "-value").on("input", function() {
-      params[key] = +this.value;
-      updateAttribute(key, +this.value);
-    });
-    updateAttribute(key, value, false)
-  }
-
-
-  d3.select("#" +  "quarantine_neighbors-value").on("input", function() {
-    params["quarantine_neighbors"] = +this.checked;
-    updateAttribute("quarantine_neighbors", +this.value);
-    d3.select("#quarantine_neighbors-value").property('checked', +this.checked);
-  });
-  d3.select("#quarantine_neighbors-value").property('checked', params["quarantine_neighbors"]);
-
-  d3.select("#" +  "title-value").on("input", function() {
-    params["title"] = this.value;
-    updateAttribute("title", this.value);
-  });  
-  d3.select('#title-value').property('value', this.value)
-
-}
 function initializeGraph() {
-  initializeParams()
+  initializeFromParams()
   resetSimulation()
 }
-initializeGraph()
-if (autoplay) {
-  startAnimation()
+
+function start() {
+  initializeGraph()
+  drawChart(daily_data)
+  if (params.autoplay) {
+    startAnimation()
+  }  
 }
+
+google.charts.load('current', {packages: ['corechart', 'line']}).then(start);
+
+
 </script>
