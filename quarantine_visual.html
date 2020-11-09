@@ -7,21 +7,21 @@
 <tr>
  <td>
     <label for="pop">Group Size:</label>
-    <input type="number" id="pop" oninput="updateAndInitializeFromParams('pop', +this.value, false)">
+    <input type="number" id="pop"  title="Number of people in each cell." oninput="updateAndInitializeFromParams('pop', +this.value, false)">
  </td>
  <td>
   <label for="group_skew">Heterogenity:</label>
-  <input type="number" id="group_skew" oninput="updateAndInitializeFromParams('group_skew', +this.value, false)">
+  <input type="number" id="group_skew"  title="Variability of R0: 0=Each group has the same R0." oninput="updateAndInitializeFromParams('group_skew', +this.value, false)">
  </td> 
 </tr>
 <tr>
 <td>
-  <label for="title">State Name:</label>
-  <select id="title" onchange="updateAndInitializeFromParams('title', this.options[this.selectedIndex].value, false)">  
+  <label for="title">Select State:</label>
+  <select id="title" title="Which state's parameters to edit." onchange="updateAndInitializeFromParams('title', this.options[this.selectedIndex].value, false)">  
 </td>
 <td>
-  <button onclick="deleteState()">Delete State</button>
-  <button onclick="addState()">Add State</button>
+  <button onclick="deleteState()" title="Delete the current state.">Delete State</button>
+  <button onclick="addState()" title="Adds a new state, it starts with the same parameters as the current one.">Add State</button>
 </td>
 </tr>
 </table>
@@ -30,30 +30,30 @@
 <tr>
  <td>
     <label for="r0">Population Spread (R0):</label>
-    <input type="number" id="r0" oninput="updateAndInitializeFromParams('r0', +this.value, true)">
+    <input type="number" id="r0" oninput="updateAndInitializeFromParams('r0', +this.value, true)" title="The average R0.">
  </td>
 <td>
     <label for="neighbor_infections">Neighbor Interactions Per Million</label>
-    <input type="number" id="neighbor_infections" oninput="updateAndInitializeFromParams('neighbor_infections', +this.value, true)">
+    <input type="number" id="neighbor_infections" oninput="updateAndInitializeFromParams('neighbor_infections', +this.value, true)" title="The proportion of interactions with neighboring cells.">
  </td>
  <td>
     <label for="global_infections">Global Interactions Per Million</label>
-    <input type="number" id="global_infections" oninput="updateAndInitializeFromParams('global_infections', +this.value, true)">
+    <input type="number" id="global_infections" oninput="updateAndInitializeFromParams('global_infections', +this.value, true)" title="The proportion of interactions with a random cell.">
  </td>
 </tr>
 <tr>
  <td>
     <label for="quarantine_percentage">Quarantine Percentage:</label>
-    <input type="number" id="quarantine_percentage" oninput="updateAndInitializeFromParams('quarantine_percentage', +this.value, true)">
+    <input type="number" id="quarantine_percentage" oninput="updateAndInitializeFromParams('quarantine_percentage', +this.value, true)" title="At what percentage of currently infected people does a cell enter quarantine. Quarantine means that no other cells interact with it.">
  </td>
 
  <td>
     <label for="quarantine_leave_percentage">Quarantine Leave Percentage:</label>
-    <input type="number" id="quarantine_leave_percentage" oninput="updateAndInitializeFromParams('quarantine_leave_percentage', +this.value, true)">
+    <input type="number" id="quarantine_leave_percentage" oninput="updateAndInitializeFromParams('quarantine_leave_percentage', +this.value, true)"  title="If a cell is in quarantine, at what percentage of currently infected people can it leave quarantine and restart neighbor interactions.">
  </td>
    <td>
     <label for="quarantine_neighbors">Quarantine Neighbors:</label>
-    <input type="checkbox" id="quarantine_neighbors" oninput="updateAndInitializeFromParams('quarantine_neighbors', this.checked, true)">
+    <input type="checkbox" id="quarantine_neighbors" oninput="updateAndInitializeFromParams('quarantine_neighbors', this.checked, true)" title="If a celll is in quarantine, do we also quarantine neighbors of the cell.">
  </td> 
 </tr>
 </table>
@@ -66,11 +66,10 @@
     <button onclick="resetSimulation()">Restart</button>
     <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
-    <button onclick="drawChart(daily_data)">Update Graph</button>    
     <button onclick="downloadGIF()">Download GIF</button>   
     <label for="autoplay">Autoplay:</label>
     <input type="checkbox" id="autoplay" oninput="updateAndInitializeFromParams('autoplay', this.checked, false)">
-    <a href="" id="myInput">Permalink</a>
+    <a href="" id="myInput" title="A shareable link with all of the settings intact.">Permalink</a>
     <td>
       <label for="animation_speed">Animation Speed (Days / s):</label>
       <input type="number" id="animation_speed"  oninput="updateAndInitializeFromParams('animation_speed', +this.value, false)">
