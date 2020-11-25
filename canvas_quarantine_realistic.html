@@ -31,7 +31,6 @@
 <tr>
   <td>
     <button onclick="resetSimulation()">Restart</button>
-    <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
     <button onclick="downloadGIF()">Download GIF</button>   
     <label for="autoplay">Autoplay:</label>
@@ -45,7 +44,7 @@
 </tr>
 </table>
 
-<div class="container" style="display: flex">;
+<div class="container" style="display: flex">
   <canvas id="myCanvas" width="750" height="600" style="border:1px solid #d3d3d3;"></canvas>
   <div id="curve_chart" style="flex-grow: 1;"></div>
 </div>
@@ -56,9 +55,19 @@
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="math.js"></script>
 <script src="whammy.js"></script>
-<script src="state_data/ga.json"></script>
 
-<script>
+<script id="dynamicLoader">
+  let w = new URLSearchParams(window.location.search)
+  loaded_state = w.get('load_state') || 'ga'
+  let myScript = document.createElement("script");
+  myScript.setAttribute("src", "state_data/" + loaded_state + ".json");
+  myScript.setAttribute("async", "false");
+  myScript.setAttribute("defer", "false");
+  let dynamicLoader = document.getElementById('dynamicLoader');
+  dynamicLoader.parentNode.insertBefore(myScript, dynamicLoader.nextSibling);
+</script>
+
+<script async=false>
 
 function loadStateData(raw_data) {
 
@@ -80,10 +89,6 @@ function loadStateData(raw_data) {
   }
 
 }
-
-state_data = loadStateData(ga_data)
-
-
 
 function seeded_random(a) {
     return function() {
@@ -309,24 +314,18 @@ function getRandom(current_params) {
 function initialState(current_params, state_data) {
    groups = []
    total_r0 = 0.0
-   expected_total = GROUPS
-   initial_infected_groups = {}
-
-
-
-
-   for (i=0; i < 10; i++) {
-    initial_infected_groups[getRandomInt(0, state_data.raw_data.length)] = true
+   total_pop = 0.0
+   for (var cbg_idx in state_data.raw_data) {
+     cbg = state_data.raw_data[cbg_idx]
+     total_pop += cbg.p * 10
+     total_r0 += cbg.t * cbg.p * 10
    }
 
    for (var cbg_idx in state_data.raw_data) {
     cbg = state_data.raw_data[cbg_idx]
-    infected = 0
+    infected = 5.0 * cbg.p * 10 / total_pop
     group_r0 = cbg.t
-    total_r0 += group_r0
-    if (cbg_idx in initial_infected_groups) {
-      infected = 10
-    }
+
     groups.push({
       population: cbg.p * 10,
       infected: initialInfected(infected, current_params.infected_days),
@@ -339,20 +338,21 @@ function initialState(current_params, state_data) {
 }
 
 function poisson(mean) {
-  var k = 0
-  while (mean > 2048) {
-    k += mean / 2
-    mean /= 2
-  }
-  var L = -mean;
-  var p = 0.0;
+  return mean
+  // var k = 0
+  // while (mean > 2048) {
+  //   k += mean / 2
+  //   mean /= 2
+  // }
+  // var L = -mean;
+  // var p = 0.0;
   
-  do {
-      k++;
-      p += Math.log(seededRandom());
-  } while (p > L);
+  // do {
+  //     k++;
+  //     p += Math.log(seededRandom());
+  // } while (p > L);
 
-  return k - 1;
+  // return k - 1;
 }
 
 function expectedNewInfections(state, new_infections) {
@@ -364,7 +364,8 @@ function expectedNewInfections(state, new_infections) {
   prob_single_not = 1 - (1 / state.population)
   prob_total_not = Math.pow(prob_single_not, actual_infections)
   prob_selected = 1 - prob_total_not
-  return Math.round((state.population - state.ever_sick) * prob_selected) 
+  return (state.population - state.ever_sick) * prob_selected 
+  // return Math.round((state.population - state.ever_sick) * prob_selected) 
 }
 
 function AddInfections(existing_infections, new_infections) {
@@ -700,7 +701,7 @@ function initializeFromParams(make_transitions = true) {
     makeTransitions()  
   }
   var copyText = document.getElementById("myInput");
-  copyText.href =  window.location.href.split('?')[0] + "?params=" + encodeParams() 
+  copyText.href =  window.location.href.split('?')[0] + "?load_state=" + loaded_state + "&params=" + encodeParams()
 }
 
 function initializeGraph() {
@@ -709,6 +710,7 @@ function initializeGraph() {
 }
 
 function start() {
+  state_data = loadStateData(eval(loaded_state + "_data"))
   initializeGraph()
   drawChart(daily_data)
   if (params.autoplay) {
