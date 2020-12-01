@@ -10,6 +10,11 @@
   <select id="title" title="Which state's parameters to edit." onchange="updateAndInitializeFromParams('title', this.options[this.selectedIndex].value, false)">  
 </td>
 <td>
+    <label for="randomize">Randomize:</label>
+    <input type="checkbox" id="randomize" oninput="updateAndInitializeFromParams('randomize', this.checked, false)">
+</td>
+
+<td>
   <button onclick="deleteState()" title="Delete the current state.">Delete State</button>
   <button onclick="addState()" title="Adds a new state, it starts with the same parameters as the current one.">Add State</button>
 </td>
@@ -19,7 +24,7 @@
 <table style="width:100%">
 <tr>
  <td>
-    <label for="r0">Population Spread (R0):</label>
+    <label for="r0">Population Mobility Spread (R0):</label>
     <input type="number" id="r0" oninput="updateAndInitializeFromParams('r0', +this.value, true)" title="The average R0.">
  </td>
 </tr>
@@ -31,8 +36,10 @@
 <tr>
   <td>
     <button onclick="resetSimulation()">Restart</button>
+    <button onclick="resetRandom()">New Random Seed</button>
     <button onclick="startAnimation()">Start/Stop Animation</button>    
     <button onclick="downloadGIF()">Download GIF</button>   
+    <button onclick="exportToCSV()">ExportToCsv</button>   
     <label for="autoplay">Autoplay:</label>
     <input type="checkbox" id="autoplay" oninput="updateAndInitializeFromParams('autoplay', this.checked, false)">
     <a href="" id="myInput" title="A shareable link with all of the settings intact.">Permalink</a>
@@ -44,9 +51,13 @@
 </tr>
 </table>
 
+<div>
+  <canvas id="myCanvas" width=1000 height="600" style="border:1px solid #d3d3d3;"></canvas>
+</div>
+
 <div class="container" style="display: flex">
-  <canvas id="myCanvas" width="750" height="600" style="border:1px solid #d3d3d3;"></canvas>
-  <div id="curve_chart" style="flex-grow: 1;"></div>
+    <div id="curve_chart" ></div>
+    <div id="r0_chart" ></div>
 </div>
 
 
@@ -69,6 +80,28 @@
 
 <script async=false>
 
+function getBoundingBox(raw_data) {
+  minX = 360
+  maxX = -360
+  minY = 360
+  maxY = -360 
+  for (var idx in raw_data) {
+    points = raw_data[idx].g
+    for (var point_idx in points) {
+      minX = Math.min(minX, points[point_idx][0])
+      maxX = Math.max(maxX, points[point_idx][0])
+      minY = Math.min(minY, points[point_idx][1])
+      maxY = Math.max(maxY, points[point_idx][1])
+    }
+  }
+  return {
+    minX: minX,
+    maxX: maxX,
+    minY: minY,
+    maxY: maxY
+  }
+}
+
 function loadStateData(raw_data) {
 
   interconnect_matrix = []
@@ -84,6 +117,7 @@ function loadStateData(raw_data) {
 
   combined_matrix = math.matrix(interconnect_matrix, 'sparse')
   return {
+    bounding_box: getBoundingBox(raw_data),
     interconnect: combined_matrix,
     raw_data: raw_data
   }
@@ -124,21 +158,50 @@ function getNeighbors(index, num_groups) {
   return neighbors
 }
 
-function getTotalParams(current_groups, day, state) {
+function getTotalParams(current_groups, day, state, current_params) {
   var total_infected = 0
   var total_population = 0
   var total_sick = 0
+  var weighted_r0 = 0;
+  var weighted_rt = 0
   for (i = 0; i < current_groups.length; i++) {
+    group_r0 = current_groups[i].r0  * (current_params.r0)
+    group_rt = group_r0 * (1 - (current_groups[i].ever_sick / current_groups[i].population))
+    weighted_r0 += group_r0 * AllInfected(current_groups[i].infected)
+    weighted_rt += group_rt * AllInfected(current_groups[i].infected)
+
     total_infected += current_groups[i].ever_sick
     total_population += current_groups[i].population
     total_sick += AllInfected(current_groups[i].infected)
   }
+
+  if (total_sick == 0) {
+    weighted_rt = 0
+    weighted_r0 = 0
+  } else {
+    weighted_r0 /= total_sick
+    weighted_rt /= total_sick
+  }
+
   return {
     day: day,
     state: state,
     ever_sick: total_infected,
     population: total_population,
-    infected: total_sick
+    infected: total_sick,
+    weighted_rt: weighted_rt,
+    weighted_r0: weighted_r0,
+  }
+}
+
+function rescalePoint(bounding_box, point, size, offset) {
+  fraction = {
+    x: (point[0] - bounding_box.minX) / (bounding_box.maxX - bounding_box.minX),
+    y: 1 - (point[1] - bounding_box.minY) / (bounding_box.maxY - bounding_box.minY)
+  }
+  return {
+    x: fraction.x * size.x + offset.x,
+    y: fraction.y * size.y + offset.y,
   }
 }
 
@@ -191,7 +254,69 @@ function drawChart(simulation_data) {
   return chart;
 }
 
-function drawCanvas(data, day, day_params) {
+function drawR0Chart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Weighted R0");
+  data.addColumn('number', "Weighted RT");
+  prev_state = null
+  for (var i in simulation_data) {
+    annotation = null
+    simulation_point = simulation_data[i]
+    if (prev_state != null && simulation_point.state != prev_state) {
+      annotation = simulation_point.state
+    }
+    prev_state = simulation_point.state
+    data.addRow([simulation_point.day, annotation, simulation_point.weighted_r0, simulation_point.weighted_rt])
+  }
+
+  var options = {
+    title: "Transmission (weighted by current infections)",
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 0}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Weighted Transmission', scaleType: 'log'},
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+
+  var chart = new google.visualization.LineChart(document.getElementById('r0_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+
+function drawPolygon(bounding_box, points, size, offset, ctx, color, fill) {
+  if (points.length == 0) {
+    return
+  }
+  first_point = rescalePoint(bounding_box, points[0], size, offset)
+  ctx.fillStyle = color
+  ctx.strokeStyle = color
+  ctx.beginPath()
+  ctx.moveTo(first_point.x, first_point.y)
+  for (var i = 1; i < points.length; i++) {
+    next_point = rescalePoint(bounding_box, points[i], size, offset)
+    ctx.lineTo(next_point.x, next_point.y)
+  }
+  if (fill) {
+    ctx.fill()
+  } else {
+    ctx.stroke()
+  }
+}
+
+function drawCanvas(data, day, day_params, state_data) {
   var c = document.getElementById("myCanvas");
   var ctx = c.getContext("2d");
   var rect_height = 10
@@ -228,62 +353,50 @@ function drawCanvas(data, day, day_params) {
   ctx.fillText('Currently Infected per Million: ' + (infected * 1e6 / population).toFixed(0), 0, 45);
   ctx.fillText('Percentage Ever Infected: ' + (ever_sick * 100 / population).toFixed(2) + '%', 0, 60)
   ctx.fillText('Percentage in quarantine: ' + (quarantined_groups * 100 / data.length).toFixed(2) + '%', 0, 75)
-
+  size = {
+    x: c.width - 50,
+    y: c.height - GRAPH_OFFSET - 50
+  }
+  offset = {
+    x: 25,
+    y: GRAPH_OFFSET + 25
+  }
   for (group_index in data) {
-
-    var x = group_index % ROW_WIDTH
-    var y = Math.floor(group_index  / ROW_WIDTH)
-    var group = data[group_index]
-    fraction_ever_infected = Math.sqrt(group.ever_sick / group.population) * 256
-    ctx.fillStyle = `rgb(
+    group = data[group_index]
+    fraction_ever_infected = (group.ever_sick / group.population) * 256
+    color  = `rgb(
       ${fraction_ever_infected},
       ${255 - fraction_ever_infected}, 
       0)`;
-    rect_left = x * rect_width
-    rect_top =  y * rect_height + GRAPH_OFFSET
-
-    ctx.fillRect(rect_left, rect_top, rect_width, rect_height);
-    ctx.beginPath();
-    ctx.rect(rect_left, rect_top, rect_width, rect_height);
-    ctx.stroke();
-    if (data[group_index].in_quarantine) {
-      ctx.strokeStyle = '#000000'
-      ctx.beginPath();
-      ctx.moveTo(rect_left, rect_top);
-      ctx.lineTo(rect_left + rect_width, rect_top + rect_height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(rect_left + rect_width, rect_top);
-      ctx.lineTo(rect_left, rect_top + rect_height);
-      ctx.stroke();
-    }
+    drawPolygon(state_data.bounding_box, state_data.raw_data[group_index].g, size, offset, ctx, color, true)
   }
-  encoder.add(c)
 }
 
-
-function defaultInitialState() {
-  return  {
-      'r0': 2,
-    }
-}
 
 
 function defaultParams() {
   return  {
     'infected_days': 7,
     'title': 'Initial',
-    'animation_speed': 5,
-    'autoplay': false,
+    'animation_speed': 20,
+    'autoplay': true,
+    'randomize': false,
     'random_seed': new Date().getTime(),
     'state_params': {
-      'Initial': defaultInitialState(),
+      'Initial': {
+        'r0': 1.0
+      },
       'Lockdown': {
         'r0': .5,
-      }
+      },
+      'Relaxed': {
+        'r0': .75,
+      },
     },
     'transitions': [
-      {'state_name': 'Initial', 'end_day': 365},
+      {'state_name': 'Initial', 'end_day': 30},
+      {'state_name': 'Lockdown', 'end_day': 120},
+      {'state_name': 'Relaxed', 'end_day': 365},
     ]
   }
 }
@@ -315,6 +428,12 @@ function initialState(current_params, state_data) {
    groups = []
    total_r0 = 0.0
    total_pop = 0.0
+   initial_infected_groups = {}
+   if (randomize) {
+    for (i=0; i < 1; i++) {
+      initial_infected_groups[getRandomInt(0, state_data.raw_data.length)] = true
+    }
+   }
    for (var cbg_idx in state_data.raw_data) {
      cbg = state_data.raw_data[cbg_idx]
      total_pop += cbg.p * 10
@@ -323,7 +442,15 @@ function initialState(current_params, state_data) {
 
    for (var cbg_idx in state_data.raw_data) {
     cbg = state_data.raw_data[cbg_idx]
-    infected = 5.0 * cbg.p * 10 / total_pop
+    infected = 0.0
+    if (current_params.randomize) {
+      if (cbg_idx in initial_infected_groups) {
+        infected = 10
+      }
+    } else {
+      infected = 10 * cbg.p * 10 / total_pop
+    }
+
     group_r0 = cbg.t
 
     groups.push({
@@ -337,35 +464,41 @@ function initialState(current_params, state_data) {
    return groups
 }
 
-function poisson(mean) {
-  return mean
-  // var k = 0
-  // while (mean > 2048) {
-  //   k += mean / 2
-  //   mean /= 2
-  // }
-  // var L = -mean;
-  // var p = 0.0;
+function poisson(mean, randomize) {
+  if (!randomize) {
+    return mean
+  }
+  var k = 0
+  while (mean > 2048) {
+    k += mean / 2
+    mean /= 2
+  }
+  var L = -mean;
+  var p = 0.0;
   
-  // do {
-  //     k++;
-  //     p += Math.log(seededRandom());
-  // } while (p > L);
+  do {
+      k++;
+      p += Math.log(seededRandom());
+  } while (p > L);
 
-  // return k - 1;
+  return k - 1;
 }
 
-function expectedNewInfections(state, new_infections) {
+function expectedNewInfections(state, new_infections, randomize) {
   if(state.population == 0 || new_infections == 0) {
     return 0;
   }
-  actual_infections = poisson(new_infections)
+  actual_infections = poisson(new_infections, randomize)
 
   prob_single_not = 1 - (1 / state.population)
   prob_total_not = Math.pow(prob_single_not, actual_infections)
   prob_selected = 1 - prob_total_not
-  return (state.population - state.ever_sick) * prob_selected 
-  // return Math.round((state.population - state.ever_sick) * prob_selected) 
+  if (!randomize) {
+    return (state.population - state.ever_sick) * prob_selected 
+  } else {
+    return Math.round((state.population - state.ever_sick) * prob_selected)   
+  }
+  
 }
 
 function AddInfections(existing_infections, new_infections) {
@@ -405,7 +538,7 @@ function advanceState(current_groups, day, current_params, state_data) {
 
    expected_received_infections = []
    for (i = 0; i < current_groups.length; i++) {
-    non_local = math.subset(intended_infections, math.index(i)) * (1 - PRESUMED_LOCAL_FRACTION)
+    non_local = math.subset(intended_infections, math.index(i)) * (1 -  PRESUMED_LOCAL_FRACTION)
     local = expected_sent_infections[i] * PRESUMED_LOCAL_FRACTION
     expected_received_infections.push(non_local + local)
    }
@@ -413,7 +546,7 @@ function advanceState(current_groups, day, current_params, state_data) {
 
    for (i = 0; i < current_groups.length; i++) {
       var group = current_groups[i]
-      actual_infections = expectedNewInfections(group, expected_received_infections[i])
+      actual_infections = expectedNewInfections(group, expected_received_infections[i], current_params.randomize)
       new_groups.push({
         population: group.population,
         infected: AddInfections(group.infected, actual_infections),
@@ -441,12 +574,17 @@ function handleDataAvailable(event) {
   }
 }
 
+function drawCharts(daily_data) {
+  drawChart(daily_data)
+  drawR0Chart(daily_data)
+}
+
 
 function stopAnimation() {
   if (timeout_id != null) {
     window.clearInterval(timeout_id)
     timeout_id = null    
-    drawChart(daily_data)
+    drawCharts(daily_data)
   }
 }
 
@@ -501,13 +639,16 @@ function resetSimulation() {
   day = 1
   var day_params = getParamsForDay()
   daily_data = []
+  group_history = []
+
   if (day_params == null) {
     groups = []
   } else {
     groups = initialState(params, state_data)  
-    daily_data.push(getTotalParams(groups, day, day_params.title))
+    group_history.push(groups)
+    daily_data.push(getTotalParams(groups, day, day_params.title, params))
   }  
-  drawCanvas(groups, day, day_params)
+  drawCanvas(groups, day, day_params, state_data)
 }
 
 function advanceDay() {
@@ -526,14 +667,19 @@ function advanceDayInternal() {
 
   if (day == 1) {
     resetRand()
+    group_history = []
+    daily_data = []
     groups = initialState(current_params, state_data)
-    drawChart(daily_data)
+    group_history.push(groups)
+    daily_data.push(groups)
+    drawCharts(daily_data)
   }
   groups = advanceState(groups, day, current_params, state_data)
-  daily_data.push(getTotalParams(groups, day, current_params.title))
-  drawCanvas(groups, day, current_params)
+  group_history.push(groups)
+  daily_data.push(getTotalParams(groups, day, current_params.title, current_params))
+  drawCanvas(groups, day, current_params, state_data)
   if (day % 10 == 0) {
-    drawChart(daily_data)
+    drawCharts(daily_data)
   }
   day += 1
 }
@@ -592,7 +738,7 @@ function deleteState() {
   delete params.state_params[params.title]
   remaining_keys = Object.keys(params.state_params)
   if (remaining_keys.length == 0) {
-    params.state_params["Initial"] = defaultInitialState()
+    params.state_params["Initial"] = defaultParams().state_params["Initial"]
     remaining_keys = Object.keys(params.state_params)
   } 
   params.title = remaining_keys[0]
@@ -684,6 +830,7 @@ function getParamsFromWindow() {
 params = getParamsFromWindow()
 
 resetRand()
+group_history = []
 groups = []
 daily_data = []
 day = 1
@@ -693,10 +840,13 @@ function initializeFromParams(make_transitions = true) {
   makeSelect("title", Object.keys(params.state_params), params.title)
   setValue("animation_speed", params.animation_speed, false)
   setValue("autoplay", params.autoplay, true)
+  setValue("randomize", params.randomize, true)
 
   state_params = params.state_params[params.title]
 
   setValue("r0", state_params.r0, false)
+  setValue("internal_r0", state_params.internal_r0, false)
+
   if (make_transitions) {
     makeTransitions()  
   }
@@ -712,11 +862,72 @@ function initializeGraph() {
 function start() {
   state_data = loadStateData(eval(loaded_state + "_data"))
   initializeGraph()
-  drawChart(daily_data)
+  drawCharts(daily_data)
   if (params.autoplay) {
     startAnimation()
   }  
 }
+
+function exportToCSVInternal(filename, rows) {
+    var processRow = function (row) {
+        var finalVal = '';
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString();
+            if (row[j] instanceof Date) {
+                innerValue = row[j].toLocaleString();
+            };
+            var result = innerValue.replace(/"/g, '""');
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"';
+            if (j > 0)
+                finalVal += ',';
+            finalVal += result;
+        }
+        return finalVal + '\n';
+    };
+
+    var csvFile = '';
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processRow(rows[i]);
+    }
+
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+}
+
+function exportToCSV() {
+  rows = []
+  header = ['census_tract', 'population', 'total_infected']
+  for (var i = 0; i < group_history.length; i++) {
+    header.push("sick_day_" + i)
+  }
+  rows.push(header)
+
+  for (var j = 0; j < groups.length; j++) {
+    group_row = [state_data.raw_data[j].k, groups[j].population, groups[j].ever_sick]
+    for (var i = 0; i < group_history.length; i++) {
+      group_row.push(group_history[i][j].infected[0])
+    }
+    rows.push(group_row)
+  }
+
+  exportToCSVInternal("data.csv", rows)
+}
+
 
 google.charts.load('current', {packages: ['corechart', 'line']}).then(start);
 
