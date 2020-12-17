@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>Dynamic Population / Spreader Model</title>
+<h1> Global Parameters </h1>
+<table style="width:100%">
+<tr>  
+<td>
+  <label for="title">Select State:</label>
+  <select id="title" title="Which state's parameters to edit." onchange="updateAndInitializeFromParams('title', this.options[this.selectedIndex].value, false)">  
+</td>
+<td>
+  <label for="infected_days">Infection Duration:</label>
+  <input type="number" id="infected_days" oninput="updateAndInitializeFromParams('infected_days', +this.value, false)" title="The average R0.">
+</td>
+<td>
+    <label for="randomize">Randomize:</label>
+    <input type="checkbox" id="randomize" oninput="updateAndInitializeFromParams('randomize', this.checked, false)">
+</td>
+<td>
+    <label for="animate_geography">Animate Geography:</label>
+    <input type="checkbox" id="animate_geography" oninput="updateAndInitializeFromParams('animate_geography', this.checked, false)">
+</td>
+<td>
+    <label for="draw_graphs">Draw Graphs:</label>
+    <input type="checkbox" id="draw_graphs" oninput="updateAndInitializeFromParams('draw_graphs', this.checked, false)">
+</td>
+<td>
+  <button onclick="deleteState()" title="Delete the current state.">Delete State</button>
+  <button onclick="addState()" title="Adds a new state, it starts with the same parameters as the current one.">Add State</button>
+</td>
+</tr>
+</table>
+<h1> Relative Risks </h1>
+<table style="width:100%">
+<tr>
+<td>
+  <label for="restaurant_risk">Restuarant</label>
+  <input type="number" id="restaurant_risk" oninput="updateRelativeRisk('restaurant', +this.value)">
+</td>
+<td>
+  <label for="education_risk">Education</label>
+  <input type="number" id="education_risk" oninput="updateRelativeRisk('education', +this.value)">
+</td>
+<td>
+  <label for="health_risk">Health Care</label>
+  <input type="number" id="health_care_risk" oninput="updateRelativeRisk('health_care', +this.value)">
+</td>
+</tr>
+<tr>
+<td>
+  <label for="religion_risk">Religion</label>
+  <input type="number" id="religion_risk" oninput="updateRelativeRisk('religion', +this.value)">
+</td>
+<td>
+  <label for="other_risk">Other</label>
+  <input type="number" id="other_risk" oninput="updateRelativeRisk('other', +this.value)">
+</td>
+</tr>
+</table>
+<h1>State Parameters</h1>
+<table style="width:100%">
+<tr>
+ <td>
+    <label for="r0">Population Mobility Spread (R0):</label>
+    <input type="number" id="r0" oninput="updateAndInitializeFromParams('r0', +this.value, true)" title="The average R0.">
+ </td>
+  <td>
+    <label for="internal_r0">Population Mobility Spread (R0):</label>
+    <input type="number" id="internal_r0" oninput="updateAndInitializeFromParams('internal_r0', +this.value, true)" title="Homogenous spread within a tract.">
+ </td>
+</tr>
+<tr>
+  <td>
+    <h2>Relative Mobility:</h2>
+  </td>
+</tr>
+<tr>
+<td>
+  <label for="restaurant_mobility">Restuarant</label>
+  <input type="number" id="restaurant_mobility" oninput="updateRelativeMobility('restaurant', +this.value)">
+</td>
+<td>
+  <label for="education_mobility">Education</label>
+  <input type="number" id="education_mobility" oninput="updateRelativeMobility('education', +this.value)">
+</td>
+<td>
+  <label for="health_care_mobility">Health Care</label>
+  <input type="number" id="health_care_mobility" oninput="updateRelativeMobility('health_care', +this.value)">
+</td>
+</tr>
+<tr>
+<td>
+  <label for="religion_mobility">Religion</label>
+  <input type="number" id="religion_mobility" oninput="updateRelativeMobility('religion', +this.value)">
+</td>
+<td>
+  <label for="other_mobility">Other</label>
+  <input type="number" id="other_mobility" oninput="updateRelativeMobility('other', +this.value)">
+</td>
+</tr>
+</table>
+<h1> Animation Transitions </h1>
+<div id="transitions"></div>
+
+<table style="width:100%">
+<tr>
+  <td>
+    <button onclick="resetSimulation()">Restart</button>
+    <button onclick="resetRandom()">New Random Seed</button>
+    <button onclick="startAnimation()">Start/Stop Animation</button>    
+    <button onclick="downloadGIF()">Download GIF</button>   
+    <button onclick="exportToCSV()">ExportToCsv</button>   
+    <label for="autoplay">Autoplay:</label>
+    <input type="checkbox" id="autoplay" oninput="updateAndInitializeFromParams('autoplay', this.checked, false)">
+    <a href="" id="myInput" title="A shareable link with all of the settings intact.">Permalink</a>
+    <td>
+      <label for="animation_speed">Animation Speed (Days / s):</label>
+      <input type="number" id="animation_speed"  oninput="updateAndInitializeFromParams('animation_speed', +this.value, false)">
+    </td> 
+  </td>
+</tr>
+</table>
+
+<div>
+  <canvas id="myCanvas" width=1000 height="600" style="border:1px solid #d3d3d3;"></canvas>
+</div>
+
+<div class="container" style="display: flex">
+    <div id="curve_chart" ></div>
+    <div id="r0_chart" ></div>
+</div>
+
+
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="math.js"></script>
+<script src="whammy.js"></script>
+
+<script id="dynamicLoader">
+  GROUP_CATEGORIES = ["restaurant", "religion", "education", "health_care", "other"]
+
+  let w = new URLSearchParams(window.location.search)
+  loaded_state = w.get('load_state') || 'ga'
+  for (var category_idx in GROUP_CATEGORIES) {
+    let myScript = document.createElement("script");
+    myScript.setAttribute("src", "state_poi_split_data/" + loaded_state + "_" + GROUP_CATEGORIES[category_idx] + ".json");
+    myScript.setAttribute("async", "false");
+    myScript.setAttribute("defer", "false");
+    let dynamicLoader = document.getElementById('dynamicLoader');
+    dynamicLoader.parentNode.insertBefore(myScript, dynamicLoader.nextSibling);
+  }
+</script>
+
+<script async=false>
+
+GROUP_SUB_POPULATIONS = [1]
+
+function initialState(current_params, state_data) {
+  group_weights = []
+  total_group_weight = 0
+  for (var i in GROUP_SUB_POPULATIONS) {
+    total_group_weight += GROUP_SUB_POPULATIONS[i]
+  }
+
+  for (var i in GROUP_SUB_POPULATIONS) {
+    group_weights.push(GROUP_SUB_POPULATIONS[i] * GROUP_SUB_POPULATIONS.length / total_group_weight)
+  }
+   
+  groups = []
+  total_pop = 0.0
+  num_infected = 1
+  initial_infected_groups = {}
+  if (current_params.randomize) {
+    for (i=0; i < num_infected; i++) {
+      initial_infected_groups[getRandomInt(0, state_data.pops.length)] = true
+    }
+   }
+   for (var pop_idx in state_data.pops) {
+     total_pop += state_data.pops[pop_idx]
+   }
+
+   for (var pop_idx in state_data.pops) {
+    pop = state_data.pops[pop_idx]
+    infected = 0.0
+    if (current_params.randomize) {
+      if (pop_idx in initial_infected_groups) {
+        infected = 10 / num_infected
+      }
+    } else {
+      infected = 10 * pop / total_pop
+    }
+
+
+    sub_groups = []
+    for (var i in group_weights) {
+      sub_infected = (infected / group_weights.length)
+      sub_groups.push({
+        weight: group_weights[i],
+        infected: initialInfected(sub_infected, current_params.infected_days),
+        ever_sick: sub_infected,
+        population: pop * 10 / group_weights.length
+      }) 
+    }
+
+    groups.push({
+      sub_groups: sub_groups,
+    })
+   }
+
+   return groups
+}
+
+function AddInfections(existing_infections, new_infections) {
+  added_infections = []
+  added_infections.push(new_infections)
+  for (var i = 0; i < existing_infections.length - 1; i++) {
+    added_infections.push(existing_infections[i])
+  }
+  return added_infections
+}
+
+
+
+function AllInfected(group_infections) {
+  total_infected = 0
+  for (var i in group_infections) {
+    total_infected += group_infections[i]
+  }
+  return total_infected
+}
+
+function TotalStats(group) {
+  total_infected = 0
+  total_ever_sick = 0 
+  total_pop = 0
+  for (var i in group.sub_groups) {
+    total_infected += AllInfected(group.sub_groups[i].infected)
+    total_ever_sick += group.sub_groups[i].ever_sick
+    total_pop += group.sub_groups[i].population
+  }
+  return {
+    pop: total_pop,
+    infected: total_infected,
+    ever_sick: total_ever_sick
+  }
+  
+}
+
+
+function advanceState(current_groups, day, current_params, transmission_stats) {
+   new_groups = []
+
+   expected_local_infections = []
+   expected_global_infections = []
+   for (i = 0; i < current_groups.length; i++) {
+    expected_global_infections.push(0)
+    total_local = 0
+    current_group = current_groups[i]
+    for (j = 0; j < current_group.sub_groups.length; j++) {
+      total_local += AllInfected(current_group.sub_groups[j].infected) * current_params.internal_r0
+    }
+    expected_local_infections.push(total_local / current_params.infected_days)
+   }
+
+
+   expected_sent_infections = []
+   for (i = 0; i < current_groups.length; i++) {
+    total_sent = 0
+    current_group = current_groups[i]
+    for (j = 0; j < current_group.sub_groups.length; j++) {
+      total_sent += AllInfected(current_group.sub_groups[j].infected) * current_params.r0 * transmission_stats.group_r0[i] * current_group.sub_groups[j].weight
+     }
+    expected_sent_infections.push(total_sent / current_params.infected_days)
+   }
+   intended_infections = math.squeeze(math.multiply([expected_sent_infections], transmission_stats.interconnect))
+   for (i = 0; i < current_groups.length; i++) {
+    non_local = math.subset(intended_infections, math.index(i))
+    expected_global_infections[i] += non_local
+   }
+
+   for (i = 0; i < current_groups.length; i++) {
+      var group = current_groups[i]
+      new_sub_groups = []
+      for (j = 0; j < group.sub_groups.length; j++) {
+        var sub_group = group.sub_groups[j]
+        expected_global =  expected_global_infections[i] * (sub_group.weight /  group.sub_groups.length)
+        expected_local = expected_local_infections[i] / group.sub_groups.length 
+        actual_infections = expectedNewInfections(sub_group, expected_global + expected_local, current_params.randomize)
+        new_sub_groups.push({
+          population: sub_group.population,
+          infected: AddInfections(sub_group.infected, actual_infections),
+          ever_sick: sub_group.ever_sick + actual_infections,
+          weight: sub_group.weight
+        })
+      }
+      new_groups.push({
+        sub_groups: new_sub_groups
+      })
+    }
+   return new_groups
+}
+
+
+function getBoundingBox(raw_data) {
+  minX = 360
+  maxX = -360
+  minY = 360
+  maxY = -360 
+  for (var idx in raw_data['other']) {
+    points = raw_data['other'][idx].g
+    for (var point_idx in points) {
+      minX = Math.min(minX, points[point_idx][0])
+      maxX = Math.max(maxX, points[point_idx][0])
+      minY = Math.min(minY, points[point_idx][1])
+      maxY = Math.max(maxY, points[point_idx][1])
+    }
+  }
+  return {
+    minX: minX,
+    maxX: maxX,
+    minY: minY,
+    maxY: maxY
+  }
+}
+
+function loadStateData(raw_data) {
+
+  weighted_total = 0
+  total_pop = 0
+  pops = []
+  for (category_idx in GROUP_CATEGORIES) {
+    pops = []
+    total_pop = 0
+    category = GROUP_CATEGORIES[category_idx]
+    category_data = raw_data[GROUP_CATEGORIES[category_idx]]
+    for (var idx in category_data) {
+      pop_used = category_data[idx].p * 10
+      weighted_total += pop_used * category_data[idx].t
+      
+      total_pop += pop_used
+      pops.push(pop_used)
+    }
+  }
+
+  return {
+    pops: pops,
+    bounding_box: getBoundingBox(raw_data),
+    raw_data: raw_data,
+    weighted_total: weighted_total / total_pop
+  }
+
+}
+
+function GetTransmissionForState(state_data, current_params) {
+  interconnect_matrix = Array(state_data.pops.length)
+  r0s = []
+  baseline_weighted_total = 0
+  total_pop = 0
+
+  for (var idx in state_data.pops) {
+    total_pop += state_data.pops[idx]
+    r0 = 0
+    cbg_interconnect = Array(state_data.pops.length)
+    cbg_interconnect.fill(0)
+
+
+    for (var a_category_idx in GROUP_CATEGORIES) {
+      raw_data = state_data.raw_data[GROUP_CATEGORIES[a_category_idx]][idx]
+      baseline_r0 = raw_data.t * current_params.relative_risks[GROUP_CATEGORIES[a_category_idx]]
+      relative_r0 = baseline_r0 * current_params.relative_mobility[GROUP_CATEGORIES[a_category_idx]]
+      r0 += relative_r0
+      baseline_weighted_total += baseline_r0 * state_data.pops[idx]
+    }
+    for (var category_idx in GROUP_CATEGORIES) {
+      raw_data = state_data.raw_data[GROUP_CATEGORIES[category_idx]][idx]
+      for (var neighbor_idx in raw_data.n) {
+        cbg_interconnect[neighbor_idx] += (raw_data.n[neighbor_idx] * raw_data.t * 
+          current_params.relative_risks[GROUP_CATEGORIES[category_idx]] * current_params.relative_mobility[GROUP_CATEGORIES[category_idx]]) / r0
+      }
+    }
+    interconnect_matrix[idx] = cbg_interconnect
+    r0s.push(r0)
+  }
+
+  baseline_weighted_average = baseline_weighted_total / total_pop
+  for (var r0_idx in r0s) {
+    r0s[r0_idx] /= baseline_weighted_average
+  }
+
+  return {
+    interconnect: math.matrix(interconnect_matrix, 'sparse'),
+    group_r0: r0s 
+  }
+
+}
+
+function seeded_random(a) {
+    return function() {
+      var t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+
+ROW_WIDTH = 75
+GRAPH_OFFSET = 100
+GROUPS = 3750
+
+
+function getNeighbors(index, num_groups) {
+  var x = index % ROW_WIDTH
+  var y = Math.floor(index  / ROW_WIDTH)
+  var num_rows = num_groups / ROW_WIDTH
+  neighbors = []
+  for (var i = -1; i <= 1; i++) {
+    for (var j = -1; j <= 1; j++) {
+      if (i != 0 || j != 0) {
+        neighbor_x = (x + i) 
+        neighbor_y = (y + j)
+        if (neighbor_x >= 0 && neighbor_x < ROW_WIDTH && neighbor_y >= 0 && neighbor_y < num_rows) {
+          neighbors.push(neighbor_y * ROW_WIDTH + neighbor_x)
+        }
+      }
+    } 
+  }
+  return neighbors
+}
+
+function getTotalParams(current_groups, day, state, current_params, transmission_stats) {
+  var total_infected = 0
+  var total_population = 0
+  var total_sick = 0
+  var weighted_r0 = 0;
+  var weighted_rt = 0
+  for (i = 0; i < current_groups.length; i++) {
+    for (j = 0; j < current_groups[i].sub_groups.length; j++) {
+      sub_group = current_groups[i].sub_groups[j]
+      infected = AllInfected(sub_group.infected)
+      group_r0 = (transmission_stats.group_r0[i]  * sub_group.weight * current_params.r0) + current_params.internal_r0
+      group_rt = group_r0 * (1 - (sub_group.ever_sick / sub_group.population))
+      weighted_r0 += group_r0 * infected
+      weighted_rt += group_rt * infected
+
+      total_infected += sub_group.ever_sick
+      total_population += sub_group.population
+      total_sick += infected
+    }
+  }
+
+  if (total_sick == 0) {
+    weighted_rt = 0
+    weighted_r0 = 0
+  } else {
+    weighted_r0 /= total_sick
+    weighted_rt /= total_sick
+  }
+
+  return {
+    day: day,
+    state: state,
+    ever_sick: total_infected,
+    population: total_population,
+    infected: total_sick,
+    weighted_rt: weighted_rt,
+    weighted_r0: weighted_r0,
+  }
+}
+
+function rescalePoint(bounding_box, point, size, offset) {
+  fraction = {
+    x: (point[0] - bounding_box.minX) / (bounding_box.maxX - bounding_box.minX),
+    y: 1 - (point[1] - bounding_box.minY) / (bounding_box.maxY - bounding_box.minY)
+  }
+  return {
+    x: fraction.x * size.x + offset.x,
+    y: fraction.y * size.y + offset.y,
+  }
+}
+
+function drawChart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Percent Infected");
+  data.addColumn('number', "Infected Per Million");
+  prev_state = null
+  for (var i in simulation_data) {
+    annotation = null
+    simulation_point = simulation_data[i]
+    if (prev_state != null && simulation_point.state != prev_state) {
+      annotation = simulation_point.state
+    }
+    prev_state = simulation_point.state
+    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
+  }
+
+  var options = {
+    title: params.title,
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Percentage Infected'},
+      1: {title: 'Infected Per Million'}
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+  if (params.total_infected_max != 0) {
+    options.vAxes[0].maxValue = params.total_infected_max
+  }
+  if (params.infected_max != 0) {
+    options.vAxes[1].maxValue = params.infected_max
+  }
+
+  var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+
+function drawR0Chart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Weighted R0");
+  data.addColumn('number', "Weighted RT");
+  prev_state = null
+  for (var i in simulation_data) {
+    annotation = null
+    simulation_point = simulation_data[i]
+    if (prev_state != null && simulation_point.state != prev_state) {
+      annotation = simulation_point.state
+    }
+    prev_state = simulation_point.state
+    data.addRow([simulation_point.day, annotation, simulation_point.weighted_r0, simulation_point.weighted_rt])
+  }
+
+  var options = {
+    title: "Transmission (weighted by current infections)",
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 0}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Weighted Transmission', scaleType: 'log'},
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+
+  var chart = new google.visualization.LineChart(document.getElementById('r0_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+
+function drawPolygon(bounding_box, points, size, offset, ctx, color, fill) {
+  if (points.length == 0) {
+    return
+  }
+  first_point = rescalePoint(bounding_box, points[0], size, offset)
+  ctx.fillStyle = color
+  ctx.strokeStyle = color
+  ctx.beginPath()
+  ctx.moveTo(first_point.x, first_point.y)
+  for (var i = 1; i < points.length; i++) {
+    next_point = rescalePoint(bounding_box, points[i], size, offset)
+    ctx.lineTo(next_point.x, next_point.y)
+  }
+  if (fill) {
+    ctx.fill()
+  } else {
+    ctx.stroke()
+  }
+}
+
+function drawCanvas(data, day, day_params, state_data) {
+  var c = document.getElementById("myCanvas");
+  var ctx = c.getContext("2d");
+  var rect_height = 10
+  var rect_width = 10
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillRect(0,0, c.width, c.height)
+
+
+  infected = 0
+  ever_sick = 0
+  population = 0
+  groups_with_infection = 0
+  quarantined_groups = 0
+  for (group_index in data) {
+    var group = data[group_index]
+    total_stats = TotalStats(group)
+    infected += total_stats.infected
+    population += total_stats.pop
+    ever_sick += total_stats.ever_sick
+    if (infected > 0) {
+      groups_with_infection += 1
+    }
+    if (group.in_quarantine) {
+      quarantined_groups += 1
+    }
+  }
+
+  ctx.fillStyle = '#000000'
+  ctx.font = '15px serif';
+
+
+  ctx.fillText('State: ' + day_params.title, 0, 15)
+  ctx.fillText('Day: ' + day, 0, 30)
+  ctx.fillText('Currently Infected per Million: ' + (infected * 1e6 / population).toFixed(0), 0, 45);
+  ctx.fillText('Percentage Ever Infected: ' + (ever_sick * 100 / population).toFixed(2) + '%', 0, 60)
+  if (!day_params.animate_geography) {
+    return
+  }
+  size = {
+    x: c.width - 50,
+    y: c.height - GRAPH_OFFSET - 50
+  }
+  offset = {
+    x: 25,
+    y: GRAPH_OFFSET + 25
+  }
+  for (group_index in data) {
+    group = data[group_index]
+    stats = TotalStats(group)
+    fraction_ever_infected = (stats.ever_sick / stats.pop) * 256
+    color  = `rgb(
+      ${fraction_ever_infected},
+      ${255 - fraction_ever_infected}, 
+      0)`;
+    drawPolygon(state_data.bounding_box, state_data.raw_data['other'][group_index].g, size, offset, ctx, color, true)
+  }
+}
+
+function defaultParams() {
+  return  {
+    'infected_days': 7,
+    'title': 'Initial',
+    'animation_speed': 20,
+    'autoplay': true,
+    'randomize': false,
+    'animate_geography': true,
+    'draw_graphs': true,
+    'random_seed': new Date().getTime(),
+    'relative_risks': {
+      'restaurant': 2.0,
+      'religion': 1.0,
+      'education': 1.0,
+      'health_care': 1.0,
+      'other': 1.0
+    },
+    'state_params': {
+      'Initial': {
+        'r0': .5,
+        'internal_r0': .5,
+        'relative_mobility': {
+          'restaurant': 1.0,
+          'religion': 1.0,
+          'education': 1.0,
+          'health_care': 1.0,
+          'other': 1.0, 
+        },
+      },
+      'Lockdown': {
+        'r0': .25,
+        'internal_r0': .25,
+        'relative_mobility': {
+          'restaurant': 1.0,
+          'religion': 1.0,
+          'education': 1.0,
+          'health_care': 1.0,
+          'other': 1.0, 
+        },
+      },
+      'Relaxed': {
+        'r0': .375,
+        'internal_r0': .375,
+        'relative_mobility': {
+          'restaurant': 1.0,
+          'religion': 1.0,
+          'education': 1.0,
+          'health_care': 1.0,
+          'other': 1.0, 
+        }
+      },
+    },
+    'transitions': [
+      {'state_name': 'Initial', 'end_day': 30},
+      {'state_name': 'Lockdown', 'end_day': 120},
+      {'state_name': 'Relaxed', 'end_day': 365},
+    ]
+  }
+}
+
+
+
+
+function resetRand() {
+  seededRandom = seeded_random(params.random_seed)
+}
+
+
+
+
+function initialInfected(num_infected, infected_days) {
+  infection = []
+  for (var i = 0; i < infected_days; i++) {
+    infection.push(0)
+  }
+  infection[0] = num_infected
+  return infection
+}
+
+function getRandom(current_params) {
+  return Math.pow(seededRandom(), current_params.group_skew)
+}
+
+function poisson(mean, randomize) {
+  if (!randomize) {
+    return mean
+  }
+  var k = 0
+  while (mean > 2048) {
+    k += mean / 2
+    mean /= 2
+  }
+  var L = -mean;
+  var p = 0.0;
+  
+  do {
+      k++;
+      p += Math.log(seededRandom());
+  } while (p > L);
+
+  return k - 1;
+}
+
+function expectedNewInfections(state, new_infections, randomize) {
+  if(state.population == 0 || new_infections == 0) {
+    return 0;
+  }
+
+  prob_single_not = 1 - (1 / state.population)
+  prob_total_not = Math.pow(prob_single_not, new_infections)
+  prob_selected = 1 - prob_total_not
+  real_result = (state.population - state.ever_sick) * prob_selected 
+  
+  if (!randomize) {
+    return real_result
+  }
+
+
+  actual_infections = poisson(real_result, randomize)
+  selected_indices = {}
+  for (var i = 0; i < actual_infections; i++) {
+    selected_indices[getRandomInt(0, state.population - state.ever_sick)] = true
+  }
+  return Object.keys(selected_indices).length
+  
+}
+
+
+function inQuarantine(group, current_params) {
+  percentage_infected = AllInfected(group.infected) * 100 / group.population
+  return percentage_infected >= current_params.quarantine_percentage || (group.in_quarantine && percentage_infected >= current_params.quarantine_leave_percentage)
+}
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(seededRandom() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
+
+
+timeout_id = null
+
+var encoder = new Whammy.Video(15); 
+
+function handleDataAvailable(event) {
+  if (event.data.size > 0) {
+    recordedChunks.push(event.data);
+  }
+}
+
+function drawCharts(daily_data) {
+  if (params.draw_graphs) {
+    drawChart(daily_data)
+    drawR0Chart(daily_data)
+  }
+}
+
+
+function stopAnimation() {
+  if (timeout_id != null) {
+    window.clearInterval(timeout_id)
+    timeout_id = null    
+    drawCharts(daily_data)
+  }
+}
+
+function startAnimation() {
+  if (timeout_id == null) {
+    timeout_id = window.setInterval(advanceDayInternal, 1000 / params.animation_speed)
+  } else {
+    stopAnimation()
+  }
+}
+
+function getDailyParamState(current_day) {
+  for (var transition_idx in params.transitions) {
+    transition = params.transitions[transition_idx]
+    if (transition.end_day >= current_day) {
+      return transition.state_name
+    }
+  }
+  return null
+}
+
+function getFullParams(transition_state) {
+  new_params = {}
+  for (key in params) {
+    if (key == 'state_params') {
+      used_state = params.state_params[transition_state]
+      for (var state_key in used_state) {
+        new_params[state_key] = used_state[state_key]
+      }
+    } else if (key != 'transitions') {
+      new_params[key] = params[key]
+    }
+  }
+  new_params['title'] = transition_state
+  return new_params
+}
+
+function getParamsForDay() {
+  var transition_state = getDailyParamState(day)
+  if (transition_state == null) {
+    return null
+  }
+  return getFullParams(transition_state)
+
+
+}
+
+function resetSimulation() {
+  resetRand()
+  stopAnimation()
+  encoder = new Whammy.Video(params.animation_speed)
+  day = 1
+  var day_params = getParamsForDay()
+  daily_data = []
+  group_history = []
+
+  if (day_params == null) {
+    groups = []
+  } else {
+    groups = initialState(params, state_data)  
+  }  
+  drawCanvas(groups, day, day_params, state_data)
+}
+
+function advanceDay() {
+  stopAnimation()
+  advanceDayInternal()
+}
+
+prev_state = null
+transmission_stats = null
+
+function advanceDayInternal() {
+  var current_params = getParamsForDay()
+  var current_state = getDailyParamState(day)
+  if (current_params == null) {
+    stopAnimation()
+    return
+  }
+
+  if (day == 1) {
+    resetRand()
+    group_history = []
+    daily_data = []
+    groups = initialState(current_params, state_data)
+    group_history.push(groups)
+    daily_data.push(groups)
+    drawCharts(daily_data)
+    prev_state = null
+    transmission_stats = null
+  }
+  if (prev_state == null || prev_state != current_state) {
+    transmission_stats = GetTransmissionForState(state_data, current_params)
+    prev_state = current_state
+  }
+
+  groups = advanceState(groups, day, current_params, transmission_stats)
+  group_history.push(groups)
+  daily_data.push(getTotalParams(groups, day, current_params.title, current_params, transmission_stats))
+  drawCanvas(groups, day, current_params, state_data)
+  if (day % 10 == 0) {
+    drawCharts(daily_data)
+  }
+  day += 1
+}
+
+function resetRandom() {
+  params.random_seed = new Date().getTime()
+  resetRand()
+}
+
+function downloadGIF() {
+  stopAnimation()
+  encoder.compile(false, function(output){
+    url = URL.createObjectURL(output)
+    window.open(url)}
+  ) 
+}
+
+
+function setValue(name, value, is_checkbox) {
+  if (is_checkbox) {
+    d3.select("#" + name).property('checked', value);
+  } else {
+    d3.select("#" + name).text(value);
+      d3.select("#" + name).property("value", value);
+  }
+}
+
+function updateAndInitializeFromParams(attr, value, is_state_param) {
+  if (is_state_param) {
+    params.state_params[params.title][attr] = value
+  } else {
+    params[attr] = value
+  }
+  initializeFromParams();
+}
+
+function updateRelativeRisk(category, value) {
+  params.relative_risks[category] = value
+  initializeFromParams()
+}
+
+function updateRelativeMobility(category, value) {
+  params.state_params[params.title].relative_mobility[category] = value
+  initializeFromParams()
+}
+
+
+function makeSelect(element_id, options, selected_value) {
+  var title_object = document.getElementById(element_id)
+  var option_select_str = ""
+  var found_index = -1
+  var param_index = 0
+  for (option_index in options) {
+    var option = options[option_index]
+    if (option == selected_value) {
+      found_index = param_index
+    }
+    param_index++;
+    option_select_str += `<option value="${option}">${option}</option>`
+  }
+  title_object.innerHTML = option_select_str;
+  title_object.options.selectedIndex = found_index;
+}
+
+function deleteState() {
+  var old_title = params.title
+  delete params.state_params[params.title]
+  remaining_keys = Object.keys(params.state_params)
+  if (remaining_keys.length == 0) {
+    params.state_params["Initial"] = defaultParams().state_params["Initial"]
+    remaining_keys = Object.keys(params.state_params)
+  } 
+  params.title = remaining_keys[0]
+  new_transitions = []
+  for (idx in params.transitions) {
+    transition = params.transitions[idx]
+    if (transition.state_name != old_title) {
+      new_transitions.push(transition)
+    }
+  }
+  params.transitions = new_transitions
+  initializeFromParams()
+}
+
+function addState() {
+  var new_state = prompt("Enter new state name")
+  if (new_state != null) {
+    new_params = {}
+    Object.assign(new_params, params.state_params[params.title])
+
+    params.state_params[new_state] = new_params
+    params.title = new_state
+  }
+  initializeFromParams()
+}
+
+function makeTransitionSelect(selected_state, index) {
+  select_label = "<label for='transition_title'>State Name:</label>"
+  options = ""
+  var states = Object.keys(params.state_params)
+  selected_index = -1
+  for (var idx in states) {
+    option = states[idx]
+    state = states[idx]
+    if (state == selected_state) {
+      options +=  `<option value="${option}" selected>${option}</option>`
+    } else {
+      options +=  `<option value="${option}">${option}</option>`
+    }
+  }
+  return `<label>State Name:</label><select onchange="updateTransition('state_name', this.options[this.selectedIndex].value, ${index})">${options}</select>`
+}
+
+function deleteTransition(index) {
+  params.transitions.splice(index, 1)
+  initializeFromParams()
+}
+
+function addTransition(index) {
+  last_transition = {}
+  Object.assign(last_transition, params.transitions[params.transitions.length - 1])
+  params.transitions.push(last_transition)
+  initializeFromParams()
+}
+
+function updateTransition(attr_type, value, index) {
+  params.transitions[index][attr_type] = value
+  initializeFromParams(false)
+}
+
+function makeTransitions() {
+  transition_str = ""
+  for (var idx in params.transitions) {
+    transition = params.transitions[idx] 
+    end_day = transition.end_day
+    select_str = makeTransitionSelect(transition.state_name, idx)
+    input_str = `<label>End Day</label><input type="number" oninput="updateTransition('end_day', +this.value, ${idx})" text=${end_day} value=${end_day}>`
+    button_str = `<button onclick="deleteTransition(${idx})">Remove Transition</button>` 
+    transition_str += `<p>${select_str} ${input_str} ${button_str}</p>`
+  }
+  transition_str += `<p><button onclick="addTransition()">Add Transition</button></p>`
+  elem = document.getElementById("transitions").innerHTML = transition_str
+
+}
+
+function encodeParams() {
+  return btoa(JSON.stringify(params))
+}
+
+function getParamsFromWindow() {
+  let w = new URLSearchParams(window.location.search)
+  param_string = w.get('params')
+  if (param_string == null) {
+    return defaultParams()
+  }
+  return JSON.parse(atob(param_string))
+}
+
+params = getParamsFromWindow()
+
+resetRand()
+group_history = []
+groups = []
+daily_data = []
+day = 1
+
+
+function initializeFromParams(make_transitions = true) {
+  makeSelect("title", Object.keys(params.state_params), params.title)
+  setValue("infected_days", params.infected_days, false)
+  setValue("animation_speed", params.animation_speed, false)
+  setValue("autoplay", params.autoplay, true)
+  setValue("randomize", params.randomize, true)
+  setValue("draw_graphs", params.draw_graphs, true)
+  setValue("animate_geography", params.animate_geography, true)
+
+  for (var category in params.relative_risks) {
+    setValue(category + "_risk", params.relative_risks[category], false)
+  }
+
+  state_params = params.state_params[params.title]
+
+  setValue("r0", state_params.r0, false)
+  setValue("internal_r0", state_params.internal_r0, false)
+
+  for (var category in state_params.relative_mobility) {
+    setValue(category + "_mobility", state_params.relative_mobility[category], false)
+  }
+
+
+  if (make_transitions) {
+    makeTransitions()  
+  }
+  var copyText = document.getElementById("myInput");
+  copyText.href =  window.location.href.split('?')[0] + "?load_state=" + loaded_state + "&params=" + encodeParams()
+}
+
+function initializeGraph() {
+  initializeFromParams()
+  resetSimulation()
+}
+
+function start() {
+  raw_state_data = {}
+  for (category_idx in GROUP_CATEGORIES) {
+    category = GROUP_CATEGORIES[category_idx]
+    raw_state_data[category] = eval(loaded_state + "_" + category + "_data")
+  }
+  state_data = loadStateData(raw_state_data)
+  initializeGraph()
+  drawCharts(daily_data)
+  if (params.autoplay) {
+    startAnimation()
+  }  
+}
+
+function exportToCSVInternal(filename, rows) {
+    var processRow = function (row) {
+        var finalVal = '';
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString();
+            if (row[j] instanceof Date) {
+                innerValue = row[j].toLocaleString();
+            };
+            var result = innerValue.replace(/"/g, '""');
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"';
+            if (j > 0)
+                finalVal += ',';
+            finalVal += result;
+        }
+        return finalVal + '\n';
+    };
+
+    var csvFile = '';
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processRow(rows[i]);
+    }
+
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+}
+
+function exportToCSV() {
+  rows = []
+  header = ['census_tract', 'population', 'total_infected']
+  for (var i = 0; i < group_history.length; i++) {
+    header.push("sick_day_" + i)
+  }
+  rows.push(header)
+
+  for (var j = 0; j < groups.length; j++) {
+    group_row = [state_data.raw_data[j].k, groups[j].population, groups[j].ever_sick]
+    for (var i = 0; i < group_history.length; i++) {
+      group_row.push(group_history[i][j].infected[0])
+    }
+    rows.push(group_row)
+  }
+
+  exportToCSVInternal("data.csv", rows)
+}
+
+
+google.charts.load('current', {packages: ['corechart', 'line']}).then(start);
+
+
+</script>
