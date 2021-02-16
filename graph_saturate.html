@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>Dynamic Population / Spreader Model</title>
+
+<table style="width:100%">
+<tr>
+ <td>Transmission Parameters:</td>
+</tr>
+<tr>
+ <td>
+    <label for="r0">Saturated R0:</label>
+    <input type="range" min="0" max="10" id="r0" step=.01>
+    <input type="number" id="r0-value">
+ </td>
+  <td>
+    <label for="seir_r0">Seir R0:</label>
+    <input type="range" min="0" max="10" id="seir_r0" step=.01>
+    <input type="number" id="seir_r0-value">
+ </td>
+ <td>
+    <label for="location_size">Location Size</label>
+    <input type="range" min="0" max="5000" id="location_size" step=.01>
+    <input type="number" id="location_size-value">
+ </td>
+</tr>
+<tr>
+ <td>Lockdown Transmission Parameters:</td>
+</tr>
+<tr>
+ <td>
+    <label for="lockdown_r0">Lockdown Saturated R0:</label>
+    <input type="range" min="0" max="10" id="lockdown_r0" step=.01>
+    <input type="number" id="lockdown_r0-value">
+ </td>
+  <td>
+    <label for="lockdown_seir_r0">Seir R0:</label>
+    <input type="range" min="0" max="10" id="lockdown_seir_r0" step=.01>
+    <input type="number" id="lockdown_seir_r0-value">
+ </td>
+ <td>
+    <label for="lockdown_location_size">Location Size</label>
+    <input type="range" min="0" max="5000" id="lockdown_location_size" step=.01>
+    <input type="number" id="lockdown_location_size-value">
+ </td>
+</tr>
+ <tr>
+   <td>Lockdown Timing:</td>
+ </tr>
+ <tr>
+ <td>
+    <label for="lockdown_start">Lockdown Start:</label>
+    <input type="range" min="0" max="101" id="lockdown_start">
+    <input type="number" id="lockdown_start-value">
+ </td>
+ <td>
+    <label for="lockdown_end">Lockdown End:</label>
+    <input type="range" min="0" max="100" id="lockdown_end">
+    <input type="number" id="lockdown_end-value">
+ </td>
+</tr>
+<tr>
+ <td>Graph Parameters:</td>
+</tr>
+<tr>
+ <td>
+  <label for="total_infected_max">Percentage Infected Display Max:</label>
+  <input type="range" min="0" max="100" id="total_infected_max" step=1>
+  <input type="number" id="total_infected_max-value" size="10">
+ </td>
+ <td>
+  <label for="infected_max">Current Infected Display Max:</label>
+  <input type="range" min="0" max="100000" id="infected_max" step=1>
+  <input type="number" id="infected_max-value" size="100"> 
+ </td>
+ <td>
+  <label for="days">Simulation days:</label>
+  <input type="range" min="0" max="365" id="days" step=1>
+  <input type="number" id="days-value" size="100"> 
+ </td> 
+</tr>
+<tr>
+ </td>
+ <td>
+   <a href="" id="myInput">Permalink</a>
+ </td>
+ <td>
+    <a href="" id="graphImage" title="On chrome right click and open in new tab.">Graph Image Link</a>
+</td>
+</tr>
+
+
+</table>
+
+<div id="curve_chart"></div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+
+
+function drawChart(simulation_data) {
+
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'Day');
+  data.addColumn({type: 'string', role: 'annotation'});
+  data.addColumn('number', "Percent Infected");
+  data.addColumn('number', "Infected Per Million");
+  for (var i in simulation_data) {
+    annotation = null
+    if (i == params.lockdown_start) {
+      annotation = 'Lockdown Start'
+    } else if (i == params.lockdown_end) {
+      annotation = 'Lockdown End'
+    }
+    simulation_point = simulation_data[i]
+    data.addRow([simulation_point.day, annotation, (simulation_point.ever_sick * 100) / simulation_point.population, simulation_point.infected * 1e6 / simulation_point.population])
+  }
+
+  var options = {
+    title: params.title,
+    width: 900,
+    height: 500,
+    // Gives each series an axis that matches the vAxes number below.
+    series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+    vAxes: {
+      // Adds titles to each axis.
+      0: {title: 'Percentage Infected'},
+      1: {title: 'Infected Per Million'}
+    },
+    annotations: {
+      style: 'line'
+    }
+  };
+  if (params.total_infected_max != 0) {
+    options.vAxes[0].maxValue = params.total_infected_max
+  }
+  if (params.infected_max != 0) {
+    options.vAxes[1].maxValue = params.infected_max
+  }
+
+  var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+  chart.draw(data, options);
+  return chart;
+}
+
+function paramOrDefault(w, param, default_val) {
+  if (param == "title") {
+    return w.get(param) || default_val
+  }
+  let val = parseFloat(w.get(param))
+  if(val == 0) {
+    return 0
+  }
+  return val || default_val
+  
+}
+ 
+ 
+function defaultParams() {
+  return {
+    population: 1e6,
+    location_size: 100,
+    r0: 2.0,
+    seir_r0: 0,
+    lockdown_r0: 2.0,
+    lockdown_seir_r0: 0,
+    lockdown_location_size: 100,
+    lockdown_start: -1,
+    lockdown_end: -1,
+    infected_max: 0,
+    total_infected_max: 0,
+    days: 100,
+    title: "Infections Over Time"
+  } 
+}
+
+function getParams() {
+  let w = new URLSearchParams(window.location.search)
+
+  default_params = defaultParams()
+  params = {}
+  for (let [key, value] of Object.entries(default_params)) {
+     params[key] = paramOrDefault(w, key, value)
+  } 
+  return params
+
+}
+
+params = getParams() 
+INFECTED_DAYS = 5
+function makeWindowParams() {
+  original_params = defaultParams()
+  parts = []
+  for (let [key, value] of Object.entries(params)) {
+     if (value != original_params[key]) {
+      parts.push(key + "=" + value)
+     }
+  } 
+  return parts.join("&")  
+}
+
+function copyGraphLink() {
+  var copyText = document.getElementById("myInput");
+  /* Select the text field */
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+  /* Copy the text inside the text field */
+  document.execCommand("copy");
+}
+
+INFECTED_DAYS = 5
+
+function AddInfections(existing_infections, new_infections) {
+  added_infections = []
+  added_infections.push(new_infections)
+  for (var i = 0; i < existing_infections.length - 1; i++) {
+    added_infections.push(existing_infections[i])
+  }
+  return added_infections
+}
+
+function initialInfected(num_infected, infected_days) {
+  infection = []
+  for (var i = 0; i < infected_days; i++) {
+    infection.push(0)
+  }
+  infection[0] = num_infected
+  return infection
+}
+
+function AllInfected(group_infections) {
+  total_infected = 0
+  for (var i in group_infections) {
+    total_infected += group_infections[i]
+  }
+  return total_infected
+}
+
+function initialState() {
+   return {
+     population: params.population,
+     ever_sick: 1,
+     current_sick: initialInfected(1, INFECTED_DAYS),
+     base: {
+      locations: params.population / params.location_size,
+      infected_per_location: params.r0,
+      seir_r0: params.seir_r0,
+     },
+     lockdown: {
+      locations: params.population / params.lockdown_location_size,
+      infected_per_location: params.lockdown_r0,
+      seir_r0: params.lockdown_seir_r0,
+     }
+   }
+}
+
+function inLockdown(day) {
+  lockdown_started = day >= params.lockdown_start && params.lockdown_start != -1
+  lockdown_ended = day > params.lockdown_end && params.lockdown_end != -1
+  in_lockdown = lockdown_started && !lockdown_ended
+  return in_lockdown
+}
+
+function advanceState(current_state, day) {
+  if (inLockdown(day)) {
+    transmission = current_state.lockdown
+  } else {
+    transmission = current_state.base
+  }
+  location_pick_prob = (1 - 1/transmission.locations)
+  total_current_infections = AllInfected(current_state.current_sick)
+
+  no_pick_prob = Math.pow(location_pick_prob, total_current_infections)
+  affected_locations = transmission.locations * (1 - no_pick_prob)
+  saturated_infected = affected_locations * transmission.infected_per_location
+  seir_infected = total_current_infections * transmission.seir_r0
+  susceptible = (current_state.population - current_state.ever_sick)
+
+  prob_not_infected = Math.pow((1 - 1 / current_state.population), (seir_infected + saturated_infected) / INFECTED_DAYS)
+  new_infected = susceptible * (1 - prob_not_infected) 
+
+  new_state = current_state
+  new_state.ever_sick = current_state.ever_sick + new_infected,
+  new_state.current_sick = AddInfections(current_state.current_sick, new_infected)
+  return new_state
+
+}
+
+function getTotalParams(current_state, day) {
+  return {
+    day: day,
+    ever_sick: current_state.ever_sick,
+    population: current_state.population,
+    infected: AllInfected(current_state.current_sick),
+  }
+}
+
+function updateGraph() {
+  current_state = initialState();
+  data = []
+  data.push(getTotalParams(current_state, 0))
+  for(day = 1; day <= params.days; day++) {
+    current_state = advanceState(current_state, day);
+    data.push(getTotalParams(current_state, day));
+  }
+
+  var chart = drawChart(data);
+  var copyText = document.getElementById("myInput");
+  copyText.href =  window.location.href.split('?')[0] + "?" + makeWindowParams()
+  var graphLink = document.getElementById("graphImage");
+  graphLink.href = chart.getImageURI()
+}
+
+function updateAttribute(attribute, value, update_graph=true) {
+  // adjust the text on the range slider
+  d3.select("#" + attribute + "-value").text(value);
+  d3.select("#" + attribute + "-value").property("value", value);
+  d3.select("#" + attribute).property("value", value);
+  if(update_graph == true) {
+     updateGraph();
+  }
+}
+
+function initializeGraph() {
+  for (let [key, value] of Object.entries(params)) {
+    d3.select("#" + key).on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+
+    d3.select("#" + key + "-value").on("input", function() {
+      params[key] = +this.value;
+      updateAttribute(key, +this.value);
+    });
+    updateAttribute(key, value, false)
+  }
+  updateAttribute("r0", params.r0)
+}
+google.charts.load('current', {packages: ['corechart', 'line']}).then(initializeGraph);
+</script>
