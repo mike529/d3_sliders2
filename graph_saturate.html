@@ -23,6 +23,11 @@
     <input type="range" min="0" max="5000" id="location_size" step=.01>
     <input type="number" id="location_size-value">
  </td>
+  <td>
+    <label for="transmission_prob">Transmission Probability</label>
+    <input type="range" min="0" max="100" id="transmission_prob" step=.01>
+    <input type="number" id="transmission_prob-value">
+ </td>
 </tr>
 <tr>
  <td>Lockdown Transmission Parameters:</td>
@@ -42,6 +47,11 @@
     <label for="lockdown_location_size">Location Size</label>
     <input type="range" min="0" max="5000" id="lockdown_location_size" step=.01>
     <input type="number" id="lockdown_location_size-value">
+ </td>
+ <td>
+    <label for="lockdown_transmission_prob">Lockdown Transmission Probability</label>
+    <input type="range" min="0" max="100" id="lockdown_transmission_prob" step=.01>
+    <input type="number" id="lockdown_transmission_prob-value">
  </td>
 </tr>
  <tr>
@@ -168,9 +178,11 @@ function defaultParams() {
     location_size: 100,
     r0: 2.0,
     seir_r0: 0,
+    transmission_prob: 100,
     lockdown_r0: 2.0,
     lockdown_seir_r0: 0,
     lockdown_location_size: 100,
+    lockdown_transmission_prob: 100,
     lockdown_start: -1,
     lockdown_end: -1,
     infected_max: 0,
@@ -252,11 +264,13 @@ function initialState() {
       locations: params.population / params.location_size,
       infected_per_location: params.r0,
       seir_r0: params.seir_r0,
+      transmission_prob: params.transmission_prob / 100,
      },
      lockdown: {
       locations: params.population / params.lockdown_location_size,
       infected_per_location: params.lockdown_r0,
       seir_r0: params.lockdown_seir_r0,
+      transmission_prob: params.lockdown_transmission_prob / 100,
      }
    }
 }
@@ -277,11 +291,13 @@ function advanceState(current_state, day) {
   location_pick_prob = (1 - 1/transmission.locations)
   total_current_infections = AllInfected(current_state.current_sick)
 
-  no_pick_prob = Math.pow(location_pick_prob, total_current_infections)
+  no_pick_prob = Math.pow(location_pick_prob, total_current_infections * transmission.transmission_prob)
   affected_locations = transmission.locations * (1 - no_pick_prob)
   saturated_infected = affected_locations * transmission.infected_per_location
-  seir_infected = total_current_infections * transmission.seir_r0
+  seir_infected = total_current_infections * transmission.seir_r0 * transmission.transmission_prob
   susceptible = (current_state.population - current_state.ever_sick)
+
+  // susceptible = (current_state.population - AllInfected(current_state.current_sick))
 
   prob_not_infected = Math.pow((1 - 1 / current_state.population), (seir_infected + saturated_infected) / INFECTED_DAYS)
   new_infected = susceptible * (1 - prob_not_infected) 
