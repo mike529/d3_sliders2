@@ -60,12 +60,12 @@
  <tr>
  <td>
     <label for="lockdown_start">Lockdown Start:</label>
-    <input type="range" min="0" max="101" id="lockdown_start">
+    <input type="range" min="0" max="366" id="lockdown_start">
     <input type="number" id="lockdown_start-value">
  </td>
  <td>
     <label for="lockdown_end">Lockdown End:</label>
-    <input type="range" min="0" max="100" id="lockdown_end">
+    <input type="range" min="0" max="365" id="lockdown_end">
     <input type="number" id="lockdown_end-value">
  </td>
 </tr>
@@ -188,6 +188,7 @@ function defaultParams() {
     infected_max: 0,
     total_infected_max: 0,
     days: 100,
+    herd_immunity: true,
     title: "Infections Over Time"
   } 
 }
@@ -295,15 +296,19 @@ function advanceState(current_state, day) {
   affected_locations = transmission.locations * (1 - no_pick_prob)
   saturated_infected = affected_locations * transmission.infected_per_location
   seir_infected = total_current_infections * transmission.seir_r0 * transmission.transmission_prob
-  susceptible = (current_state.population - current_state.ever_sick)
-
-  // susceptible = (current_state.population - AllInfected(current_state.current_sick))
-
+  if (params.herd_immunity) {
+    susceptible = (current_state.population - current_state.ever_sick)
+  } else {
+    susceptible = (current_state.population - AllInfected(current_state.current_sick))
+  }
+   
   prob_not_infected = Math.pow((1 - 1 / current_state.population), (seir_infected + saturated_infected) / INFECTED_DAYS)
   new_infected = susceptible * (1 - prob_not_infected) 
 
   new_state = current_state
-  new_state.ever_sick = current_state.ever_sick + new_infected,
+  if (params.herd_immunity) {
+    new_state.ever_sick = current_state.ever_sick + new_infected
+  }
   new_state.current_sick = AddInfections(current_state.current_sick, new_infected)
   return new_state
 
